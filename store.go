@@ -6,6 +6,7 @@ import "path"
 // Store is a place to keep feed or node data
 type Store interface {
 	Close() error
+	Get([]byte) ([]byte, error)
 }
 
 // KvStore is an implementation of Store based on cznic kv
@@ -41,4 +42,9 @@ func OpenStore(dirname string) (store Store, err error) {
 // Close closes a KvStore and releases the file
 func (kv KvStore) Close() error {
 	return kv.db.Close()
+}
+
+// Get reads a value from a KvStore
+func (kv KvStore) Get(key []byte) ([]byte, error) {
+	return kv.db.Get(nil, key)
 }

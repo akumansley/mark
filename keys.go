@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
+	"crypto/sha256"
 	"encoding/pem"
 	"io/ioutil"
 	"path"
@@ -88,4 +89,15 @@ func OpenKeys(markDir string) (*rsa.PrivateKey, error) {
 	}
 
 	return privKey, nil
+}
+
+// Fingerprint returns a fingerprint of a pub key
+func Fingerprint(key *rsa.PublicKey) ([]byte, error) {
+	hash := sha256.New()
+	bytes, err := x509.MarshalPKIXPublicKey(key)
+	if err != nil {
+		return nil, err
+	}
+	hash.Write(bytes)
+	return hash.Sum(nil), nil
 }

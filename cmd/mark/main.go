@@ -3,7 +3,6 @@ package main
 import (
 	"crypto/rsa"
 	"errors"
-	"fmt"
 	"github.com/awans/mark"
 	"github.com/docopt/docopt-go"
 	"log"
@@ -14,7 +13,7 @@ const usage = `mark
 
 Usage:
   mark init
-  mark `
+  mark add <url>`
 
 func initDbAndKeys() error {
 	markDir := os.Getenv("MARK_DIR")
@@ -41,7 +40,7 @@ func initDbAndKeys() error {
 	return nil
 }
 
-func openDbAndKeys() (*rsa.PrivateKey, mark.Store, error) {
+func openDbAndKeys() (*rsa.PrivateKey, *mark.DB, error) {
 	markDir := os.Getenv("MARK_DIR")
 	if markDir == "" {
 		return nil, nil, errors.New("Set the environment variable MARK_DIR")
@@ -56,7 +55,20 @@ func openDbAndKeys() (*rsa.PrivateKey, mark.Store, error) {
 		return nil, nil, err
 	}
 
-	return key, store, nil
+	db := mark.DBFromStore(store)
+
+	return key, db, nil
+}
+
+func add(db *mark.DB, key *rsa.PrivateKey, url string) error {
+	bookmark := mark.Bookmark{URL: url, Note: ""}
+	entity := mark.Entity{ID:"0", Body: &bookmark}
+	err := db.Add(key, entity)
+	if err != nil  {
+		return err
+	}
+  return nil
+
 }
 
 func main() {
@@ -69,7 +81,16 @@ func main() {
 		}
 		os.Exit(0)
 	} else {
-		key, store, err := openDbAndKeys()
-		fmt.Println(key, store, err)
+		key, db, err := openDbAndKeys()
+    if err != nil {
+      log.Fatal(err)
+    }
+    defer db.Close()
+    if args["add"].(bool) {
+      err = add(db, key, args["<url>"].(string))
+			if err != nil {
+				log.Fatal(err)
+			}
+    }
 	}
 }

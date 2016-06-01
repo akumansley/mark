@@ -7,12 +7,15 @@ import (
 	"github.com/docopt/docopt-go"
 	"log"
 	"os"
+	"fmt"
+	"encoding/json"
 )
 
 const usage = `mark
 
 Usage:
   mark init
+  mark list
   mark add <url>`
 
 func initDbAndKeys() error {
@@ -68,7 +71,21 @@ func add(db *mark.DB, key *rsa.PrivateKey, url string) error {
 		return err
 	}
   return nil
+}
 
+func list(db *mark.DB, key *rsa.PrivateKey) error {
+	feed, err := db.FeedForPubKey(&key.PublicKey)
+	if err != nil {
+		return err
+	}
+
+	bytes, err := json.Marshal(feed)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("%s", bytes)
+	return nil
 }
 
 func main() {
@@ -86,11 +103,20 @@ func main() {
       log.Fatal(err)
     }
     defer db.Close()
+
     if args["add"].(bool) {
       err = add(db, key, args["<url>"].(string))
 			if err != nil {
 				log.Fatal(err)
 			}
     }
+
+		if args["list"].(bool) {
+      err = list(db, key)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+		}
 	}
 }

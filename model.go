@@ -2,9 +2,8 @@ package mark
 
 import (
 	"crypto/rsa"
-	"fmt"
+	"encoding/json"
 	"reflect"
-  "encoding/json"
 )
 
 // Bookmark is a model class representing a bookmark
@@ -20,14 +19,14 @@ type DB struct {
 
 // Close closes the db's underlying store
 func (db *DB) Close() error {
-  return db.store.Close()
+	return db.store.Close()
 }
 
 // DBFromStore is a constructor for a db
 func DBFromStore(store Store) *DB {
-  db := new(DB)
-  db.store = store
-  return db
+	db := new(DB)
+	db.store = store
+	return db
 }
 
 // Entity is an envelope for a model class
@@ -46,8 +45,8 @@ type EAV struct {
 
 // MarshalJSON map an EAV to a JSON list
 func (eav EAV) MarshalJSON() ([]byte, error) {
-  ls := []interface{} {eav.EntityID, eav.Attribute, eav.Value, eav.Added}
-  return json.Marshal(ls)
+	ls := []interface{}{eav.EntityID, eav.Attribute, eav.Value, eav.Added}
+	return json.Marshal(ls)
 }
 
 // ToEAV turns an entity into a series of EAV statements
@@ -70,31 +69,37 @@ func (entity *Entity) ToEAV() ([]EAV, error) {
 		eavs = append(eavs, eav)
 	}
 
-  return eavs, nil
+	return eavs, nil
 }
 
 // Add adds an element to the DB under a given key's space
 func (db *DB) Add(key *rsa.PrivateKey, entity Entity) error {
 	feed, err := db.FeedForPubKey(&key.PublicKey)
-  if err != nil {
-    return err
-  }
+	if err != nil {
+		return err
+	}
 
-  eavs, err := entity.ToEAV()
+	eavs, err := entity.ToEAV()
 	op := Op{Op: "eav", Version: 0, Body: eavs}
 
 	feed.Append(op)
-  fmt.Println(feed)
-  bytes, err := json.Marshal(feed)
 
+	bytes, err := json.Marshal(feed)
+	if err != nil {
+		return err
+	}
 
-  if err != nil {
-    return err
-  }
+	keyFingerprint, err := Fingerprint(&key.PublicKey)
+	if err != nil {
+		return err
+	}
 
-  fmt.Printf("%s", bytes)
+	err = db.store.Set(keyFingerprint, bytes)
+	if err != nil {
+		return err
+	}
 
-  return nil
+	return nil
 }
 
 // FeedForPubKey returns the feed for a given pub key

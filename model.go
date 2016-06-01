@@ -14,7 +14,48 @@ type Bookmark struct {
 
 // DB is the access point to the dece
 type DB struct {
-	store Store
+	store        Store
+	typeRegistry map[string]reflect.Type
+}
+
+// Register tells the DB about a given type of struct
+func (db *DB) Register(nilOfType interface{}) {
+	typeObject := reflect.ValueOf(nilOfType).Elem().Type()
+	db.typeRegistry[typeObject.Name()] = typeObject
+}
+
+// Inflate turns a list of EAVs into a list of entities
+// later EAVs (in the slice) override earlier ones
+func (db *DB) Inflate(eavs []EAV) []Entity {
+	entitiesMap := make(map[string]map[string]interface{})
+	var entities []Entity
+
+	for _, eav := range eavs {
+		entry, exists := entitiesMap[eav.EntityID]
+		if !exists {
+			entitiesMap[eav.EntityID] = make(map[string]interface{})
+			entry = entitiesMap[eav.EntityID]
+		}
+		if eav.Added {
+			entry[eav.Attribute] = eav.Value
+		} else {
+			delete(entry, eav.Attribute)
+		}
+	}
+
+	for i, entityMap := range entitiesMap {
+		entityTypeName := entityMap["Type"].(string) // if not present, fall back to something
+		entityType := db.typeRegistry[entityTypeName]
+		entity := reflect.New(entityType).Interface()
+		for k, v := range entityMap {
+			field := reflect.ValueOf(entity).Elem().FieldByName(k)
+			if field.IsValid() {
+				field.Set(reflect.ValueOf(v))
+			}
+		}
+		entities = append(entities, Entity{ID: i, Body: entity})
+	}
+	return entities
 }
 
 // Close closes the db's underlying store
@@ -26,6 +67,7 @@ func (db *DB) Close() error {
 func DBFromStore(store Store) *DB {
 	db := new(DB)
 	db.store = store
+	db.typeRegistry = make(map[string]reflect.Type, 16)
 	return db
 }
 
@@ -43,10 +85,19 @@ type EAV struct {
 	Added     bool
 }
 
-// MarshalJSON map an EAV to a JSON list
+// MarshalJSON maps an EAV to a JSON list
 func (eav EAV) MarshalJSON() ([]byte, error) {
 	ls := []interface{}{eav.EntityID, eav.Attribute, eav.Value, eav.Added}
 	return json.Marshal(ls)
+}
+
+// BuildFromList maps a JSON list to an EAV
+func (eav *EAV) BuildFromList(ls []interface{}) (error) {
+	eav.EntityID = ls[0].(string)
+	eav.Attribute = ls[1].(string)
+	eav.Value = ls[2]
+	eav.Added = ls[3].(bool)
+	return nil
 }
 
 // ToEAV turns an entity into a series of EAV statements
@@ -55,6 +106,14 @@ func (entity *Entity) ToEAV() ([]EAV, error) {
 
 	elem := reflect.ValueOf(entity.Body).Elem()
 	var eavs []EAV
+
+	typeEav := EAV{
+		EntityID:  entityID,
+		Attribute: "Type",
+		Value:     elem.Type().Name(),
+		Added:     true,
+	}
+  eavs = append(eavs, typeEav)
 
 	for i := 0; i < elem.NumField(); i++ {
 		valueField := elem.Field(i)

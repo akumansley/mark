@@ -8,7 +8,6 @@ import (
 	"log"
 	"os"
 	"fmt"
-	"encoding/json"
 )
 
 const usage = `mark
@@ -74,17 +73,35 @@ func add(db *mark.DB, key *rsa.PrivateKey, url string) error {
 }
 
 func list(db *mark.DB, key *rsa.PrivateKey) error {
+	db.Register(&mark.Bookmark{})
+
 	feed, err := db.FeedForPubKey(&key.PublicKey)
 	if err != nil {
 		return err
 	}
+	for _, op := range feed.Ops {
+		if op.Op == "eav" {
+			lsOfLs := op.Body.([]interface{})
+			var eavs []mark.EAV
 
-	bytes, err := json.Marshal(feed)
-	if err != nil {
-		return err
+			for _, ls := range lsOfLs {
+				eav := mark.EAV{}
+				eav.BuildFromList(ls.([]interface{}))
+				eavs = append(eavs, eav)
+			}
+
+			entities := db.Inflate(eavs)
+			bookmarks := make([]*mark.Bookmark, len(entities))
+			for i, v := range entities {
+				bookmarks[i] = v.Body.(*mark.Bookmark)
+			}
+			fmt.Printf("%s\n", bookmarks)
+			for i, v := range bookmarks {
+				fmt.Printf("%d. %s\n", i, v.URL)
+			}
+		}
 	}
 
-	fmt.Printf("%s", bytes)
 	return nil
 }
 

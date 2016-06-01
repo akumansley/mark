@@ -4,12 +4,26 @@ import (
   "encoding/json"
 )
 
-// Op is a serialized single operation
+// Op is an arbitrary operation
 type Op struct {
 	Op string
 	Body interface{}
 	Version int
 }
+
+// // UnmarshalJSON builds an op from json
+// func (op *Op) UnmarshalJSON(b []byte) error {
+//   err := json.Unmarshal(b, &op)
+//   if err != nil {
+//     return err
+//   }
+//
+//   // TODO look this up in a registry
+//   if op.Op == "eav" {
+//
+//   }
+//
+// }
 
 // Feed is a sequence of operations
 type Feed struct {

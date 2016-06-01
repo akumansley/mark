@@ -7,7 +7,7 @@ import "path"
 type Store interface {
 	Close() error
 	Get([]byte) ([]byte, error)
-	Set([]byte, []byte) (error)
+	Set([]byte, []byte) error
 }
 
 // KvStore is an implementation of Store based on cznic kv
@@ -51,6 +51,6 @@ func (kv KvStore) Get(key []byte) ([]byte, error) {
 }
 
 // Set sets a value in a kvstore
-func (kv KvStore) Set(key []byte, val []byte) (error) {
+func (kv KvStore) Set(key []byte, val []byte) error {
 	return kv.db.Set(key, val)
 }

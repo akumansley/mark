@@ -8,6 +8,7 @@ import (
 	"github.com/docopt/docopt-go"
 	"log"
 	"os"
+	"strconv"
 )
 
 const usage = `mark
@@ -63,8 +64,12 @@ func openDbAndKeys() (*rsa.PrivateKey, *mark.DB, error) {
 }
 
 func add(db *mark.DB, key *rsa.PrivateKey, url string) error {
+	db.Register(&mark.Bookmark{})
+	var bookmarks []mark.Bookmark
+	db.GetAll(&key.PublicKey, &bookmarks)
+
 	bookmark := mark.Bookmark{URL: url, Note: ""}
-	entity := mark.Entity{ID: "1", Body: &bookmark}
+	entity := mark.Entity{ID: strconv.Itoa(len(bookmarks)), Body: &bookmark}
 	err := db.Add(key, entity)
 	if err != nil {
 		return err

@@ -3,11 +3,11 @@ package main
 import (
 	"crypto/rsa"
 	"errors"
+	"fmt"
 	"github.com/awans/mark"
 	"github.com/docopt/docopt-go"
 	"log"
 	"os"
-	"fmt"
 )
 
 const usage = `mark
@@ -64,25 +64,26 @@ func openDbAndKeys() (*rsa.PrivateKey, *mark.DB, error) {
 
 func add(db *mark.DB, key *rsa.PrivateKey, url string) error {
 	bookmark := mark.Bookmark{URL: url, Note: ""}
-	entity := mark.Entity{ID:"0", Body: &bookmark}
+	entity := mark.Entity{ID: "1", Body: &bookmark}
 	err := db.Add(key, entity)
-	if err != nil  {
+	if err != nil {
 		return err
 	}
-  return nil
+	return nil
 }
 
 func list(db *mark.DB, key *rsa.PrivateKey) error {
 	db.Register(&mark.Bookmark{})
 
+	// TODO move this inside of DB setup
 	feed, err := db.FeedForPubKey(&key.PublicKey)
 	if err != nil {
 		return err
 	}
+	var eavs []mark.EAV
 	for _, op := range feed.Ops {
 		if op.Op == "eav" {
 			lsOfLs := op.Body.([]interface{})
-			var eavs []mark.EAV
 
 			for _, ls := range lsOfLs {
 				eav := mark.EAV{}
@@ -90,16 +91,17 @@ func list(db *mark.DB, key *rsa.PrivateKey) error {
 				eavs = append(eavs, eav)
 			}
 
-			entities := db.Inflate(eavs)
-			bookmarks := make([]*mark.Bookmark, len(entities))
-			for i, v := range entities {
-				bookmarks[i] = v.Body.(*mark.Bookmark)
-			}
-			fmt.Printf("%s\n", bookmarks)
-			for i, v := range bookmarks {
-				fmt.Printf("%d. %s\n", i, v.URL)
-			}
 		}
+	}
+
+	// TODO get all the EAVS before inflating
+	entities := db.Inflate(eavs)
+	bookmarks := make([]*mark.Bookmark, len(entities))
+	for i, v := range entities {
+		bookmarks[i] = v.Body.(*mark.Bookmark)
+	}
+	for i, v := range bookmarks {
+		fmt.Printf("%d. %s\n", i+1, v.URL)
 	}
 
 	return nil
@@ -116,20 +118,20 @@ func main() {
 		os.Exit(0)
 	} else {
 		key, db, err := openDbAndKeys()
-    if err != nil {
-      log.Fatal(err)
-    }
-    defer db.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer db.Close()
 
-    if args["add"].(bool) {
-      err = add(db, key, args["<url>"].(string))
+		if args["add"].(bool) {
+			err = add(db, key, args["<url>"].(string))
 			if err != nil {
 				log.Fatal(err)
 			}
-    }
+		}
 
 		if args["list"].(bool) {
-      err = list(db, key)
+			err = list(db, key)
 			if err != nil {
 				log.Fatal(err)
 			}

@@ -18,6 +18,21 @@ type DB struct {
 	typeRegistry map[string]reflect.Type
 }
 
+// Entity is an envelope for a model class
+type Entity struct {
+	ID         string
+	EntityType string
+	Body       interface{}
+}
+
+// EAV is an entity-attribute-value statement
+type EAV struct {
+	EntityID  string
+	Attribute string
+	Value     interface{}
+	Added     bool
+}
+
 // Register tells the DB about a given type of struct
 func (db *DB) Register(nilOfType interface{}) {
 	typeObject := reflect.ValueOf(nilOfType).Elem().Type()
@@ -53,9 +68,42 @@ func (db *DB) Inflate(eavs []EAV) []Entity {
 				field.Set(reflect.ValueOf(v))
 			}
 		}
-		entities = append(entities, Entity{ID: i, Body: entity})
+		entities = append(entities, Entity{ID: i, Body: entity, EntityType: entityTypeName})
 	}
 	return entities
+}
+
+// GetAll returns all entities of a given type
+func (db *DB) GetAll(key *rsa.PublicKey, dst interface{}) error {
+	feed, err := db.FeedForPubKey(key)
+	if err != nil {
+		return err
+	}
+	var eavs []EAV
+	for _, op := range feed.Ops {
+		if op.Op == "eav" {
+			lsOfLs := op.Body.([]interface{})
+
+			for _, ls := range lsOfLs {
+				eav := EAV{}
+				eav.BuildFromList(ls.([]interface{}))
+				eavs = append(eavs, eav)
+			}
+		}
+	}
+
+	entities := db.Inflate(eavs)
+
+	dv := reflect.ValueOf(dst).Elem()  // dv is a Value(sliceInstance)
+	dstTypeName := dv.Type().Elem().Name()
+
+	for _, entity := range entities {
+		if entity.EntityType == dstTypeName {
+			dv.Set(reflect.Append(dv, reflect.ValueOf(entity.Body).Elem()))
+		}
+	}
+
+	return nil
 }
 
 // Close closes the db's underlying store
@@ -71,20 +119,6 @@ func DBFromStore(store Store) *DB {
 	return db
 }
 
-// Entity is an envelope for a model class
-type Entity struct {
-	ID   string
-	Body interface{}
-}
-
-// EAV is an entity-attribute-value statement
-type EAV struct {
-	EntityID  string
-	Attribute string
-	Value     interface{}
-	Added     bool
-}
-
 // MarshalJSON maps an EAV to a JSON list
 func (eav EAV) MarshalJSON() ([]byte, error) {
 	ls := []interface{}{eav.EntityID, eav.Attribute, eav.Value, eav.Added}
@@ -92,7 +126,7 @@ func (eav EAV) MarshalJSON() ([]byte, error) {
 }
 
 // BuildFromList maps a JSON list to an EAV
-func (eav *EAV) BuildFromList(ls []interface{}) (error) {
+func (eav *EAV) BuildFromList(ls []interface{}) error {
 	eav.EntityID = ls[0].(string)
 	eav.Attribute = ls[1].(string)
 	eav.Value = ls[2]
@@ -113,7 +147,7 @@ func (entity *Entity) ToEAV() ([]EAV, error) {
 		Value:     elem.Type().Name(),
 		Added:     true,
 	}
-  eavs = append(eavs, typeEav)
+	eavs = append(eavs, typeEav)
 
 	for i := 0; i < elem.NumField(); i++ {
 		valueField := elem.Field(i)

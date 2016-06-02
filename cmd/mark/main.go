@@ -74,32 +74,9 @@ func add(db *mark.DB, key *rsa.PrivateKey, url string) error {
 
 func list(db *mark.DB, key *rsa.PrivateKey) error {
 	db.Register(&mark.Bookmark{})
+	var bookmarks []mark.Bookmark
+	db.GetAll(&key.PublicKey, &bookmarks)
 
-	// TODO move this inside of DB setup
-	feed, err := db.FeedForPubKey(&key.PublicKey)
-	if err != nil {
-		return err
-	}
-	var eavs []mark.EAV
-	for _, op := range feed.Ops {
-		if op.Op == "eav" {
-			lsOfLs := op.Body.([]interface{})
-
-			for _, ls := range lsOfLs {
-				eav := mark.EAV{}
-				eav.BuildFromList(ls.([]interface{}))
-				eavs = append(eavs, eav)
-			}
-
-		}
-	}
-
-	// TODO get all the EAVS before inflating
-	entities := db.Inflate(eavs)
-	bookmarks := make([]*mark.Bookmark, len(entities))
-	for i, v := range entities {
-		bookmarks[i] = v.Body.(*mark.Bookmark)
-	}
 	for i, v := range bookmarks {
 		fmt.Printf("%d. %s\n", i+1, v.URL)
 	}

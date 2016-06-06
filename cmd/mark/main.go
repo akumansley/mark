@@ -4,11 +4,12 @@ import (
 	"crypto/rsa"
 	"errors"
 	"fmt"
-	"github.com/awans/mark"
-	"github.com/docopt/docopt-go"
 	"log"
 	"os"
 	"strconv"
+
+	"github.com/awans/mark"
+	"github.com/docopt/docopt-go"
 )
 
 const usage = `mark

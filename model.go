@@ -3,6 +3,7 @@ package mark
 import (
 	"crypto/rsa"
 	"encoding/json"
+	"fmt"
 	"reflect"
 )
 
@@ -94,12 +95,13 @@ func (db *DB) GetAll(key *rsa.PublicKey, dst interface{}) error {
 
 	entities := db.Inflate(eavs)
 
-	dv := reflect.ValueOf(dst).Elem()  // dv is a Value(sliceInstance)
+	dv := reflect.ValueOf(dst).Elem() // dv is a Value(sliceInstance)
 	dstTypeName := dv.Type().Elem().Name()
+	fmt.Println(dv, dstTypeName)
 
 	for _, entity := range entities {
 		if entity.EntityType == dstTypeName {
-			dv.Set(reflect.Append(dv, reflect.ValueOf(entity.Body).Elem()))
+			dv.Set(reflect.Append(dv, reflect.ValueOf(entity.Body)))
 		}
 	}
 

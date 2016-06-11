@@ -100,7 +100,7 @@ func main() {
 		}
 		os.Exit(0)
 	} else {
-		key, db, err := openDbAndKeys()
+		key, db, err := openDbAndKeys()  // maybe wrap this in a Session
 		if err != nil {
 			log.Fatal(err)
 		}

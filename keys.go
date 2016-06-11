@@ -3,8 +3,9 @@ package mark
 import (
 	"crypto/rand"
 	"crypto/rsa"
-	"crypto/x509"
 	"crypto/sha256"
+	"crypto/x509"
+	"encoding/hex"
 	"encoding/pem"
 	"io/ioutil"
 	"path"
@@ -51,7 +52,7 @@ func CreateKeys(markDir string) (*rsa.PrivateKey, error) {
 	return OpenKeys(markDir)
 }
 
-// OpenKeys reads a public/private keypair and preparese them for use
+// OpenKeys reads a public/private keypair and prepares them for use
 func OpenKeys(markDir string) (*rsa.PrivateKey, error) {
 	privKeyPath := path.Join(markDir, privateKeyFilename)
 	pubKeyPath := path.Join(markDir, publicKeyFilename)
@@ -80,10 +81,10 @@ func OpenKeys(markDir string) (*rsa.PrivateKey, error) {
 
 	privKey.PublicKey = *pubKey.(*rsa.PublicKey)
 
-	// Precompute some calculations -- Calculations that speed up private key operations in the future
+	// Calculations that speed up private key operations in the future
 	privKey.Precompute()
 
-	//Validate Private Key -- Sanity checks on the key
+	// Validate Private Key -- Sanity checks on the key
 	if err = privKey.Validate(); err != nil {
 		return nil, err
 	}
@@ -92,6 +93,9 @@ func OpenKeys(markDir string) (*rsa.PrivateKey, error) {
 }
 
 // Fingerprint returns a fingerprint of a pub key
+// Following camlistore convention, we return a hash name followed by a hex
+// encoded digest of the data
+// In this case, we use only sha256
 func Fingerprint(key *rsa.PublicKey) ([]byte, error) {
 	hash := sha256.New()
 	bytes, err := x509.MarshalPKIXPublicKey(key)
@@ -99,5 +103,5 @@ func Fingerprint(key *rsa.PublicKey) ([]byte, error) {
 		return nil, err
 	}
 	hash.Write(bytes)
-	return hash.Sum(nil), nil
+	return append([]byte("sha256-"), []byte(hex.EncodeToString(hash.Sum(nil)))...), nil
 }

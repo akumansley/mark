@@ -11,20 +11,6 @@ type Op struct {
 	Version int
 }
 
-// // UnmarshalJSON builds an op from json
-// func (op *Op) UnmarshalJSON(b []byte) error {
-//   err := json.Unmarshal(b, &op)
-//   if err != nil {
-//     return err
-//   }
-//
-//   // TODO look this up in a registry
-//   if op.Op == "eav" {
-//
-//   }
-//
-// }
-
 // Feed is a sequence of operations
 type Feed struct {
 	Ops []Op `json:"ops"`

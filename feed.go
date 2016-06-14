@@ -13,8 +13,25 @@ type Op struct {
 	Op       string
 	OpNum    int
 	FeedHash string
-	KeyID    string
-	Body     interface{}
+	RawBody  json.RawMessage `json:"Body"`
+	Body     interface{}     `json:"-"`
+}
+
+// MarshalJSON mostly just copies the Body to the RawBody
+func (op *Op) MarshalJSON() ([]byte, error) {
+	var rawBody []byte
+	var err error
+	rawBody, err = json.Marshal(op.Body)
+	if err != nil {
+		return nil, err
+	}
+	obj := make(map[string]interface{})
+	obj["OpNum"] = op.OpNum
+	obj["Op"] = op.Op
+	obj["FeedHash"] = op.FeedHash
+	raw := json.RawMessage(rawBody)
+	obj["Body"] = &raw
+	return json.Marshal(obj)
 }
 
 // Feed is a sequence of operations
@@ -24,12 +41,11 @@ type Feed struct {
 
 // DeclareKey returns an Op that sets the key for a feed
 func DeclareKey(key *rsa.PublicKey) (*Op, error) {
-	jwt, err := AsJWK(key)
+	jwk, err := AsJWK(key)
 	if err != nil {
 		return nil, err
 	}
-	return &Op{Op: "declare-key", Body: jwt}, nil
-
+	return &Op{Op: "declare-key", Body: jwk}, nil
 }
 
 // FromBytes inflates a Feed object from binary
@@ -61,22 +77,26 @@ func FromBytes(key *rsa.PublicKey, bytes []byte) (*Feed, error) {
 func (feed *Feed) Append(op Op) error {
 	// op.FeedHash = feed.FeedHash()
 	op.OpNum = feed.Ops[len(feed.Ops)-1].OpNum + 1
-	keyID, err := feed.GetKeyID()
-	if err != nil {
-		return err
-	}
-	op.KeyID = keyID
 	feed.Ops = append(feed.Ops, op)
 	return nil
 }
 
-// GetKeyID returns the currently delcared public key
-func (feed *Feed) GetKeyID() (string, error) {
+// CurrentKey returns the currently delcared public key
+func (feed *Feed) CurrentKey() (*jose.JsonWebKey, error) {
 	for i := len(feed.Ops) - 1; i >= 0; i-- {
 		op := feed.Ops[i]
 		if op.Op == "declare-key" {
-			return op.Body.(*jose.JsonWebKey).KeyID, nil
+			// this case indicates that i should do something better at unmarshal time
+			if op.Body != nil {
+				return op.Body.(*jose.JsonWebKey), nil
+			}
+			var jwk jose.JsonWebKey
+			err := json.Unmarshal(op.RawBody, &jwk)
+			if err != nil {
+				return nil, err
+			}
+			return &jwk, nil
 		}
 	}
-	return "", errors.New("Feed had no declared key")
+	return nil, errors.New("Feed had no declared key")
 }

@@ -73,20 +73,19 @@ func (db *DB) GetAll(key *rsa.PublicKey, dst interface{}) error {
 	if err != nil {
 		return err
 	}
-	var eavs []EAV
+	var allEavs []EAV
 	for _, op := range feed.Ops {
 		if op.Op == "eav" {
-			lsOfLs := op.Body.([]interface{})
-
-			for _, ls := range lsOfLs {
-				eav := EAV{}
-				eav.BuildFromList(ls.([]interface{}))
-				eavs = append(eavs, eav)
+			var eavs []EAV
+			err = json.Unmarshal(op.RawBody, &eavs)
+			if err != nil {
+				return nil
 			}
+			allEavs = append(allEavs, eavs...)
 		}
 	}
 
-	entities := db.Inflate(eavs)
+	entities := db.Inflate(allEavs)
 
 	dv := reflect.ValueOf(dst).Elem() // dv is a Value(sliceInstance)
 	dstTypeName := dv.Type().Elem().Name()
@@ -119,8 +118,13 @@ func (eav EAV) MarshalJSON() ([]byte, error) {
 	return json.Marshal(ls)
 }
 
-// BuildFromList maps a JSON list to an EAV
-func (eav *EAV) BuildFromList(ls []interface{}) error {
+// UnmarshalJSON maps a JSON list to an EAV
+func (eav *EAV) UnmarshalJSON(bytes []byte) error {
+	var ls []interface{}
+	err := json.Unmarshal(bytes, &ls)
+	if err != nil {
+		return err
+	}
 	eav.EntityID = ls[0].(string)
 	eav.Attribute = ls[1].(string)
 	eav.Value = ls[2]

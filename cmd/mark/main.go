@@ -107,6 +107,13 @@ func feed(db *mark.DB, key *rsa.PrivateKey) error {
 		return err
 	}
 	fmt.Printf("%s\n", bytes)
+	fmt.Println("Current Key:")
+	jwk, err := feed.CurrentKey()
+	if err != nil {
+		return err
+	}
+	bytes, err = json.MarshalIndent(jwk, "", "  ")
+	fmt.Printf("%s", bytes)
 	return nil
 }
 

@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/rsa"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/awans/mark"
 	"github.com/docopt/docopt-go"
+	"github.com/davecgh/go-spew/spew"
 )
 
 const usage = `mark
@@ -17,7 +19,8 @@ const usage = `mark
 Usage:
   mark init
   mark list
-  mark add <url>`
+  mark add <url>
+	mark feed`
 
 func initDbAndKeys() error {
 	markDir := os.Getenv("MARK_DIR")
@@ -90,6 +93,23 @@ func list(db *mark.DB, key *rsa.PrivateKey) error {
 	return nil
 }
 
+func feed(db *mark.DB, key *rsa.PrivateKey) error {
+	feed, err := db.FeedForPubKey(&key.PublicKey)
+	if err != nil {
+		return err
+	}
+	fmt.Println("Feed:")
+	spew.Dump(feed)
+
+	fmt.Println("\n\nSerialized:")
+	bytes, err := json.MarshalIndent(feed, "", "  ")
+	if err != nil {
+		return err
+	}
+	fmt.Printf("%s\n", bytes)
+	return nil
+}
+
 func main() {
 	args, _ := docopt.Parse(usage, nil, true, "Mark 0", false)
 
@@ -100,7 +120,7 @@ func main() {
 		}
 		os.Exit(0)
 	} else {
-		key, db, err := openDbAndKeys()  // maybe wrap this in a Session
+		key, db, err := openDbAndKeys() // maybe wrap this in a Session
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -112,13 +132,18 @@ func main() {
 				log.Fatal(err)
 			}
 		}
-
 		if args["list"].(bool) {
 			err = list(db, key)
 			if err != nil {
 				log.Fatal(err)
 			}
-
 		}
+		if args["feed"].(bool) {
+			err = feed(db, key)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+
 	}
 }

@@ -4,9 +4,7 @@ import (
 	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
-	"crypto/sha256"
-	"crypto/x509"
-	"encoding/hex"
+	"encoding/base64"
 	"errors"
 	"io/ioutil"
 	"path"
@@ -17,8 +15,6 @@ import (
 const (
 	privateKeyFilename = "key"
 	publicKeyFilename  = "key.pub"
-	pubKeyType         = "RSA PUBLIC KEY"
-	privKeyType        = "RSA PRIVATE KEY"
 )
 
 // CreateKeys makes a public private keypair and saves them in markDir
@@ -28,30 +24,18 @@ func CreateKeys(markDir string) (*rsa.PrivateKey, error) {
 		return nil, err
 	}
 
-	privateJWK := jose.JsonWebKey{
-		Key:       privKey,
-		Algorithm: string(jose.RSA1_5),
-	}
-	thumbprint, err := privateJWK.Thumbprint(crypto.SHA256)
+	privateJWK, err := AsJWK(privKey)
 	if err != nil {
 		return nil, err
 	}
-	privateJWK.KeyID = string(thumbprint)
 	if !privateJWK.Valid() {
 		return nil, errors.New("invalid private key")
 	}
 
-	publicJWK := jose.JsonWebKey{
-		Key:       &privKey.PublicKey,
-		Algorithm: string(jose.RSA1_5),
-	}
-
-	thumbprint, err = publicJWK.Thumbprint(crypto.SHA256)
+	publicJWK, err := AsJWK(&privKey.PublicKey)
 	if err != nil {
 		return nil, err
 	}
-	publicJWK.KeyID = string(thumbprint)
-
 	if !publicJWK.Valid() {
 		return nil, errors.New("invalid public key")
 	}
@@ -118,11 +102,27 @@ func OpenKeys(markDir string) (*rsa.PrivateKey, error) {
 // encoded digest of the data
 // In this case, we use only sha256
 func Fingerprint(key *rsa.PublicKey) ([]byte, error) {
-	hash := sha256.New()
-	bytes, err := x509.MarshalPKIXPublicKey(key)
+	JWK := jose.JsonWebKey{
+		Key:       key,
+		Algorithm: string(jose.RSA1_5),
+	}
+	thumbprint, err := JWK.Thumbprint(crypto.SHA256)
 	if err != nil {
 		return nil, err
 	}
-	hash.Write(bytes)
-	return append([]byte("sha256-"), []byte(hex.EncodeToString(hash.Sum(nil)))...), nil
+	return thumbprint, nil
+}
+
+// AsJWK returns a JWK representation of a key
+func AsJWK(key interface{}) (*jose.JsonWebKey, error) {
+	JWK := jose.JsonWebKey{
+		Key:       key,
+		Algorithm: string(jose.RSA1_5),
+	}
+	thumbprint, err := JWK.Thumbprint(crypto.SHA256)
+	if err != nil {
+		return nil, err
+	}
+	JWK.KeyID = base64.URLEncoding.EncodeToString(thumbprint)
+	return &JWK, nil
 }

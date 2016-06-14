@@ -167,7 +167,7 @@ func (db *DB) Add(key *rsa.PrivateKey, entity Entity) error {
 	}
 
 	eavs, err := entity.ToEAV()
-	op := Op{Op: "eav", Version: 0, Body: eavs}
+	op := Op{Op: "eav", Body: eavs}
 
 	feed.Append(op)
 
@@ -200,5 +200,5 @@ func (db *DB) FeedForPubKey(key *rsa.PublicKey) (*Feed, error) {
 	if err != nil {
 		return nil, err
 	}
-	return FromBytes(feedBytes)
+	return FromBytes(key, feedBytes)
 }

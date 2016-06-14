@@ -1,14 +1,17 @@
 package mark
 
 import (
+	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/x509"
 	"encoding/hex"
-	"encoding/pem"
+	"errors"
 	"io/ioutil"
 	"path"
+
+	"github.com/square/go-jose"
 )
 
 const (
@@ -21,33 +24,51 @@ const (
 // CreateKeys makes a public private keypair and saves them in markDir
 func CreateKeys(markDir string) (*rsa.PrivateKey, error) {
 	privKey, err := rsa.GenerateKey(rand.Reader, 2048)
-
 	if err != nil {
 		return nil, err
 	}
 
-	pubBytes, err := x509.MarshalPKIXPublicKey(&privKey.PublicKey)
+	privateJWK := jose.JsonWebKey{
+		Key:       privKey,
+		Algorithm: string(jose.RSA1_5),
+	}
+	thumbprint, err := privateJWK.Thumbprint(crypto.SHA256)
 	if err != nil {
 		return nil, err
 	}
+	privateJWK.KeyID = string(thumbprint)
+	if !privateJWK.Valid() {
+		return nil, errors.New("invalid private key")
+	}
 
-	privBytes := x509.MarshalPKCS1PrivateKey(privKey)
+	publicJWK := jose.JsonWebKey{
+		Key:       &privKey.PublicKey,
+		Algorithm: string(jose.RSA1_5),
+	}
 
-	pubPemData := pem.EncodeToMemory(&pem.Block{
-		Type:  pubKeyType,
-		Bytes: pubBytes,
-	})
+	thumbprint, err = publicJWK.Thumbprint(crypto.SHA256)
+	if err != nil {
+		return nil, err
+	}
+	publicJWK.KeyID = string(thumbprint)
 
-	privPemData := pem.EncodeToMemory(&pem.Block{
-		Type:  privKeyType,
-		Bytes: privBytes,
-	})
+	if !publicJWK.Valid() {
+		return nil, errors.New("invalid public key")
+	}
 
 	publicKeyPath := path.Join(markDir, publicKeyFilename)
-	ioutil.WriteFile(publicKeyPath, pubPemData, 0644)
+	bytes, err := publicJWK.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	ioutil.WriteFile(publicKeyPath, bytes, 0644)
 
 	privateKeyPath := path.Join(markDir, privateKeyFilename)
-	ioutil.WriteFile(privateKeyPath, privPemData, 0600)
+	bytes, err = privateJWK.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	ioutil.WriteFile(privateKeyPath, bytes, 0600)
 
 	return OpenKeys(markDir)
 }
@@ -67,19 +88,19 @@ func OpenKeys(markDir string) (*rsa.PrivateKey, error) {
 		return nil, err
 	}
 
-	privKeyBlock, _ := pem.Decode(privKeyData)
-	privKey, err := x509.ParsePKCS1PrivateKey(privKeyBlock.Bytes)
+	var privJWK, pubJWK jose.JsonWebKey
+
+	err = privJWK.UnmarshalJSON(privKeyData)
+	if err != nil {
+		return nil, err
+	}
+	err = pubJWK.UnmarshalJSON(pubKeyData)
 	if err != nil {
 		return nil, err
 	}
 
-	pubKeyBlock, _ := pem.Decode(pubKeyData)
-	pubKey, err := x509.ParsePKIXPublicKey(pubKeyBlock.Bytes)
-	if err != nil {
-		return nil, err
-	}
-
-	privKey.PublicKey = *pubKey.(*rsa.PublicKey)
+	privKey := privJWK.Key.(*rsa.PrivateKey)
+	privKey.PublicKey = *pubJWK.Key.(*rsa.PublicKey)
 
 	// Calculations that speed up private key operations in the future
 	privKey.Precompute()

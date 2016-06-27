@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 	"strconv"
 
 	"github.com/awans/mark"
@@ -121,6 +122,13 @@ func feed(db *mark.DB, key *rsa.PrivateKey) error {
 }
 
 func serve(db *mark.DB, key *rsa.PrivateKey) error {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	go func() {
+		<-c
+		db.Close()
+		os.Exit(0)
+	}()
 	s := server.New()
 	fmt.Printf("Now serving on :8080\n")
 	return http.ListenAndServe(":8080", s)

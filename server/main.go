@@ -5,9 +5,7 @@ import "github.com/gorilla/mux"
 
 // AppHandler handles all requests that want to return the client SPA
 func AppHandler(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-  path := vars["path"]
-	w.Write([]byte(path))
+	http.ServeFile(w, r, "client/index.html")
 }
 
 // APIHandler handles all requests that want an api response
@@ -24,6 +22,6 @@ func New() http.Handler {
 	a := r.PathPrefix("/api").Subrouter()
 	a.HandleFunc("/{resource}", APIHandler)
 
-	r.HandleFunc("/{path:.*}", AppHandler)
+	r.Handle("/{path:.*}", http.FileServer(http.Dir("server/data/static/build")))
 	return r
 }

@@ -6,12 +6,14 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"strconv"
 
 	"github.com/awans/mark"
-	"github.com/docopt/docopt-go"
+	"github.com/awans/mark/server"
 	"github.com/davecgh/go-spew/spew"
+	"github.com/docopt/docopt-go"
 )
 
 const usage = `mark
@@ -20,7 +22,8 @@ Usage:
   mark init
   mark list
   mark add <url>
-	mark feed`
+	mark feed
+	mark serve`
 
 func initDbAndKeys() error {
 	markDir := os.Getenv("MARK_DIR")
@@ -117,6 +120,12 @@ func feed(db *mark.DB, key *rsa.PrivateKey) error {
 	return nil
 }
 
+func serve(db *mark.DB, key *rsa.PrivateKey) error {
+	s := server.New()
+	fmt.Printf("Now serving on :8080\n")
+	return http.ListenAndServe(":8080", s)
+}
+
 func main() {
 	args, _ := docopt.Parse(usage, nil, true, "Mark 0", false)
 
@@ -151,6 +160,11 @@ func main() {
 				log.Fatal(err)
 			}
 		}
-
+		if args["serve"].(bool) {
+			err = serve(db, key)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
 	}
 }

@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "webpack --debug"
+    "build": "webpack --debug",
+    "watch": "webpack --watch",
+    "serve-dev": "webpack-dev-server --hot --inline --content server/data/static/build"
   },
   "author": "",
   "license": "BSD-2-Clause",
@@ -15,7 +17,9 @@
     "babel-loader": "~6.2.4",
     "babel-preset-react": "~6.11.0",
     "babel-preset-es2015": "~6.9.0",
-    "html-webpack-plugin": "~2.21.0"
+    "html-webpack-plugin": "~2.21.0",
+    "react-hot-loader": "~1.3.0",
+    "webpack-dev-server": "~1.14.1"
   },
   "dependencies": {
     "react-dom": "~15.1.0",

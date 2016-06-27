@@ -130,8 +130,8 @@ func serve(db *mark.DB, key *rsa.PrivateKey) error {
 		os.Exit(0)
 	}()
 	s := server.New()
-	fmt.Printf("Now serving on :8080\n")
-	return http.ListenAndServe(":8080", s)
+	fmt.Printf("Now serving on :8081\n")
+	return http.ListenAndServe(":8081", s)
 }
 
 func main() {

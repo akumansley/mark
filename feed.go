@@ -21,9 +21,13 @@ type Op struct {
 func (op *Op) MarshalJSON() ([]byte, error) {
 	var rawBody []byte
 	var err error
-	rawBody, err = json.Marshal(op.Body)
-	if err != nil {
-		return nil, err
+	if op.Body != nil {
+		rawBody, err = json.Marshal(op.Body)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		rawBody = op.RawBody
 	}
 	obj := make(map[string]interface{})
 	obj["OpNum"] = op.OpNum

@@ -65,24 +65,23 @@ var itemStyle = {
   alignItems: "start",
   flexDirection: "row",
   paddingTop: 6,
-  paddingBottom: 9,
+  paddingBottom: 6,
 }
 var handleStyle = {
   fontSize: "10px",
-  lineHeight: "10px",
-  paddingBottom: 5,
+  lineHeight: "12px",
+  paddingBottom: 2,
   color: Colors.accent,
 };
 var titleStyle = {
   fontSize: "14px",
-  lineHeight: "14px",
-  paddingBottom: 2,
+  lineHeight: "18px",
 };
 var urlStyle = {
   fontSize: "10px",
-  lineHeight: "14px",
+  lineHeight: "16px",
   color: Colors.secondaryText,
-  fontWeight: "300",
+  fontWeight: "200",
 };
 var leftStyle = {
   flex: 1,

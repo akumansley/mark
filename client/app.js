@@ -1,16 +1,17 @@
 import React from 'react';
 import {List, Map} from 'immutable';
 import {Header} from './components';
-import {Add, Marks} from './containers';
+import {Add, Feed} from './containers';
 import Radium from 'radium';
+import Colors from './colors';
 
 var baseStyle = {
-  color: "#333",
-  fontFamily: "-apple-system, BlinkMacSystemFont, 'Roboto', 'Droid Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif",
-  fontSize: "15px",
+  color: Colors.primaryText,
+  fontFamily: "'Roboto', 'Droid Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif",
+  fontSize: "14px",
   lineHeight: "1.5",
   textRendering: "optimizeLegibility",
-  maxWidth: "600px",
+  maxWidth: "400px",
   margin: "0 auto",
 }
 
@@ -19,7 +20,7 @@ export function App(props) {
         <div style={baseStyle}>
             <Header/>
             <Add/>
-            <Marks/>
+            <Feed/>
         </div>
     );
 }

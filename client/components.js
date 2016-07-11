@@ -1,37 +1,36 @@
 import React from 'react';
 import Radium from 'radium';
 import {List, Map} from 'immutable';
+import Colors from './colors';
 
-const dumbMarks = List([
-    Map({id: 0, url: "foo"}),
-    Map({id: 2, url: "bar"}),
-    Map({id: 3, url: "baz"}),
-    Map({id: 4, url: "quux"})
-]);
+var moreSrc = require('./assets/more.png');
 
 export function Header(props) {
     const headerStyles = {
-        padding: "12px 12px",
-        borderBottom: "1px solid #aaa"
+      height: "48px",
+      borderBottom: "1px solid #aaa",
+      paddingLeft: "12px",
+      display: "flex",
+      alignItems: "center",
+      flexDirection: "row"
     }
     return (
         <div style={headerStyles}>
-            Mark.
+            <span>Mark</span>
         </div>
     )
 }
 
 var inputWrapper = {
-    padding: "10px",
-    marginTop: "10px",
     display: "flex",
     flexDirection: "row",
-    alignItems: "center"
+    alignItems: "center",
+    height: "48px",
+    paddingLeft: "12px",
 }
 var input = {
-  border: "1px solid #aaa",
+  border: "none",
   fontSize: "inherit",
-  padding: "8px 12px",
   ":focus": {
     outline: "none",
   },
@@ -52,7 +51,7 @@ export function Add(props) {
     return (
         <div style={inputWrapper}>
             <input style={input}
-              placeholder="add &rarr;"
+              placeholder="Add.."
               onKeyDown={onSubmit}
               type="text"></input>
         </div>
@@ -60,26 +59,54 @@ export function Add(props) {
 }
 Add = Radium(Add);
 
-var listStyle = {
-  padding: "10px",
-}
 var itemStyle = {
-  ":hover": {
-    color: "#ace",
-  }
+  paddingLeft: 12,
+  display: "flex",
+  alignItems: "start",
+  flexDirection: "row",
+  paddingTop: 6,
+  paddingBottom: 9,
+}
+var handleStyle = {
+  fontSize: "10px",
+  lineHeight: "10px",
+  paddingBottom: 5,
+  color: Colors.accent,
+};
+var titleStyle = {
+  fontSize: "14px",
+  lineHeight: "14px",
+  paddingBottom: 2,
+};
+var urlStyle = {
+  fontSize: "10px",
+  lineHeight: "14px",
+  color: Colors.secondaryText,
+  fontWeight: "300",
+};
+var leftStyle = {
+  flex: 1,
 }
 
-export function Marks(props) {
+export function Feed(props) {
     const {items} = props;
     return (
-        <ul style={listStyle}>
+        <ul>
             {props.items.map(i => {
                 return (
-                    <div style={itemStyle}
-                      key={i.get('id')}>{i.get('url')}</div>
+                    <div style={itemStyle} key={i.get('id')}>
+                      <div style={leftStyle}>
+                        <div style={handleStyle}>awans</div>
+                        <div style={titleStyle}>{i.get('url')}</div>
+                        <div style={urlStyle}>{i.get('id')}</div>
+                      </div>
+                      <div>
+                        <img src={moreSrc}/>
+                      </div>
+                    </div>
                 )
             })}
         </ul>
     )
 }
-Marks = Radium(Marks)
+Feed = Radium(Feed)

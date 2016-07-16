@@ -1,26 +1,33 @@
 package server
 
-import "net/http"
-import "github.com/gorilla/mux"
+import (
+	"crypto/rsa"
+	"net/http"
+
+	"github.com/awans/mark"
+	"github.com/awans/mark/server/api"
+	"github.com/gorilla/mux"
+)
 
 // AppHandler handles all requests that want to return the client SPA
 func AppHandler(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "client/index.html")
 }
 
-// APIHandler handles all requests that want an api response
-func APIHandler(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-  res := vars["resource"]
-	w.Write([]byte(res))
-}
-
 // New returns a new mark server
-func New() http.Handler {
+func New(db *mark.DB, key *rsa.PrivateKey) http.Handler {
 	r := mux.NewRouter()
 
-	a := r.PathPrefix("/api").Subrouter()
-	a.HandleFunc("/{resource}", APIHandler)
+	apiRouter := r.PathPrefix("/api").Subrouter()
+
+	f := api.NewFeed(db, &key.PublicKey)
+	apiRouter.HandleFunc("/feed", f.GetFeed).Methods("GET")
+
+	b := api.NewBookmark(db, key)
+	apiRouter.HandleFunc("/bookmark", b.AddBookmark).Methods("POST")
+
+	d := api.NewDebug(db, key)
+	apiRouter.HandleFunc("/debug", d.GetDebug).Methods("GET")
 
 	r.Handle("/{path:.*}", http.FileServer(http.Dir("server/data/static/build")))
 	return r

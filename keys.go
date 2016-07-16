@@ -98,9 +98,6 @@ func OpenKeys(markDir string) (*rsa.PrivateKey, error) {
 }
 
 // Fingerprint returns a fingerprint of a pub key
-// Following camlistore convention, we return a hash name followed by a hex
-// encoded digest of the data
-// In this case, we use only sha256
 func Fingerprint(key *rsa.PublicKey) ([]byte, error) {
 	JWK := jose.JsonWebKey{
 		Key:       key,

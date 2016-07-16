@@ -122,6 +122,7 @@ func feed(db *mark.DB, key *rsa.PrivateKey) error {
 }
 
 func serve(db *mark.DB, key *rsa.PrivateKey) error {
+	db.Register(&mark.Bookmark{})
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	go func() {
@@ -129,7 +130,7 @@ func serve(db *mark.DB, key *rsa.PrivateKey) error {
 		db.Close()
 		os.Exit(0)
 	}()
-	s := server.New()
+	s := server.New(db, key)
 	fmt.Printf("Now serving on :8081\n")
 	return http.ListenAndServe(":8081", s)
 }

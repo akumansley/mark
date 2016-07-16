@@ -1,10 +1,10 @@
 import  { connect } from 'react-redux';
 import * as components from './components';
-import { addMark } from './actions';
+import { fetchFeed } from './actions';
 
 export const Feed = connect(
   function mapStateToProps(state) {
-    return { items: state }
+    return { items: state.bookmarks.get('items') }
   }
 )(components.Feed);
 

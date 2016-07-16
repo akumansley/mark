@@ -40,7 +40,7 @@ func (op *Op) MarshalJSON() ([]byte, error) {
 
 // Feed is a sequence of operations
 type Feed struct {
-	Ops []Op `json:"ops"`
+	Ops []Op
 }
 
 // DeclareKey returns an Op that sets the key for a feed
@@ -75,6 +75,33 @@ func FromBytes(key *rsa.PublicKey, bytes []byte) (*Feed, error) {
 
 	// TODO - verify feed
 	return &feed, nil
+}
+
+// ToBytes serializes a feed
+func (feed *Feed) ToBytes(key *rsa.PrivateKey) ([]byte, error) {
+	signer, err := jose.NewSigner(jose.RS256, key)
+	if err != nil {
+		return nil, err
+	}
+	var bytesList [][]byte
+
+	for _, op := range feed.Ops {
+		payload, err := json.Marshal(op)
+		if err != nil {
+			return nil, err
+		}
+		jws, err := signer.Sign(payload)
+		if err != nil {
+		    return nil, err
+		}
+		s, err := jws.CompactSerialize()
+		if err != nil {
+			return nil, err
+		}
+		bytes := []byte(s)
+		bytesList = append(bytesList, bytes)
+	}
+	return json.Marshal(bytesList)
 }
 
 // Append adds an Op to the end of a feed

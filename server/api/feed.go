@@ -1,28 +1,29 @@
 package api
 
 import (
-	"crypto/rsa"
 	"encoding/json"
 	"net/http"
 
-	"github.com/awans/mark"
+	"github.com/awans/mark/app"
 )
 
 // Feed represents bookmarks across users
 type Feed struct {
-	db  *mark.DB
-	key *rsa.PublicKey
+	db *app.DB
+	u  *app.User
 }
 
 // NewFeed builds a feed resource
-func NewFeed(db *mark.DB, key *rsa.PublicKey) *Feed {
-	return &Feed{db: db, key: key}
+func NewFeed(db *app.DB) *Feed {
+	return &Feed{db: db}
 }
 
 // GetFeed returns the current user's feed
 func (f *Feed) GetFeed(w http.ResponseWriter, r *http.Request) {
-	var bookmarks []mark.Bookmark
-	f.db.GetAll(f.key, &bookmarks)
+	bookmarks, err := f.db.GetFeed()
+	if err != nil {
+		panic(err)
+	}
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	json.NewEncoder(w).Encode(bookmarks)

@@ -1,30 +1,28 @@
 package api
 
 import (
-	"crypto/rsa"
 	"encoding/json"
 	"io"
 	"io/ioutil"
 	"net/http"
-	"strconv"
 
-	"github.com/awans/mark"
+	"github.com/awans/mark/app"
 )
 
 // Bookmark is a resource
 type Bookmark struct {
-	db  *mark.DB
-	key *rsa.PrivateKey
+	db *app.DB
+	u  *app.User
 }
 
 // NewBookmark builds a bookmark resource
-func NewBookmark(db *mark.DB, key *rsa.PrivateKey) *Bookmark {
-	return &Bookmark{db: db, key: key}
+func NewBookmark(db *app.DB) *Bookmark {
+	return &Bookmark{db: db}
 }
 
 // AddBookmark creates a new bookmark
 func (b *Bookmark) AddBookmark(w http.ResponseWriter, r *http.Request) {
-	var bookmark mark.Bookmark
+	var bookmark app.Bookmark
 	body, err := ioutil.ReadAll(io.LimitReader(r.Body, 1048576))
 	if err != nil {
 		panic(err)
@@ -39,10 +37,8 @@ func (b *Bookmark) AddBookmark(w http.ResponseWriter, r *http.Request) {
 			panic(err)
 		}
 	}
-	var bookmarks []mark.Bookmark
-	b.db.GetAll(&b.key.PublicKey, &bookmarks)
-	entity := mark.Entity{ID: strconv.Itoa(len(bookmarks)), Body: &bookmark}
-	err = b.db.Add(b.key, entity)
+
+	b.db.AddBookmark(bookmark)
 	if err != nil {
 		panic(err)
 	}

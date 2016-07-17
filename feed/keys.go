@@ -1,4 +1,4 @@
-package mark
+package feed
 
 import (
 	"crypto"
@@ -12,6 +12,7 @@ import (
 	"github.com/square/go-jose"
 )
 
+// TODO move this to the app package
 const (
 	privateKeyFilename = "key"
 	publicKeyFilename  = "key.pub"
@@ -95,19 +96,6 @@ func OpenKeys(markDir string) (*rsa.PrivateKey, error) {
 	}
 
 	return privKey, nil
-}
-
-// Fingerprint returns a fingerprint of a pub key
-func Fingerprint(key *rsa.PublicKey) ([]byte, error) {
-	JWK := jose.JsonWebKey{
-		Key:       key,
-		Algorithm: string(jose.RSA1_5),
-	}
-	thumbprint, err := JWK.Thumbprint(crypto.SHA256)
-	if err != nil {
-		return nil, err
-	}
-	return thumbprint, nil
 }
 
 // AsJWK returns a JWK representation of a key

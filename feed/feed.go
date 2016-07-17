@@ -1,6 +1,7 @@
-package mark
+package feed
 
 import (
+	"crypto"
 	"crypto/rsa"
 	"encoding/json"
 	"errors"
@@ -53,20 +54,21 @@ func DeclareKey(key *rsa.PublicKey) (*Op, error) {
 }
 
 // FromBytes inflates a Feed object from binary
-func FromBytes(key *rsa.PublicKey, bytes []byte) (*Feed, error) {
+func FromBytes(bytes []byte) (*Feed, error) {
 	var feed Feed
 	if len(bytes) == 0 {
 
-		// bootstrap a new feed
-		var ops []Op
-		declareKeyOp, err := DeclareKey(key)
-		if err != nil {
-			return nil, err
-		}
-		declareKeyOp.OpNum = 0
-		feed = Feed{Ops: ops}
-		feed.Ops = append(feed.Ops, *declareKeyOp)
-		return &feed, nil
+		// // bootstrap a new feed
+		// var ops []Op
+		// declareKeyOp, err := DeclareKey(key)
+		// if err != nil {
+		// 	return nil, err
+		// }
+		// declareKeyOp.OpNum = 0
+		// feed = Feed{Ops: ops}
+		// feed.Ops = append(feed.Ops, *declareKeyOp)
+		// return &feed, nil
+		return nil, errors.New("bytes is empty")
 	}
 	err := json.Unmarshal(bytes, &feed)
 	if err != nil {
@@ -92,7 +94,7 @@ func (feed *Feed) ToBytes(key *rsa.PrivateKey) ([]byte, error) {
 		}
 		jws, err := signer.Sign(payload)
 		if err != nil {
-		    return nil, err
+			return nil, err
 		}
 		s, err := jws.CompactSerialize()
 		if err != nil {
@@ -130,4 +132,17 @@ func (feed *Feed) CurrentKey() (*jose.JsonWebKey, error) {
 		}
 	}
 	return nil, errors.New("Feed had no declared key")
+}
+
+// Fingerprint returns a fingerprint of a pub key
+func (feed *Feed) Fingerprint() ([]byte, error) {
+	jwk, err := feed.CurrentKey()
+	if err != nil {
+		return nil, err
+	}
+	thumbprint, err := jwk.Thumbprint(crypto.SHA256)
+	if err != nil {
+		return nil, err
+	}
+	return thumbprint, nil
 }

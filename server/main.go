@@ -1,10 +1,9 @@
 package server
 
 import (
-	"crypto/rsa"
 	"net/http"
 
-	"github.com/awans/mark"
+	"github.com/awans/mark/app"
 	"github.com/awans/mark/server/api"
 	"github.com/gorilla/mux"
 )
@@ -15,18 +14,18 @@ func AppHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // New returns a new mark server
-func New(db *mark.DB, key *rsa.PrivateKey) http.Handler {
+func New(db *app.DB) http.Handler {
 	r := mux.NewRouter()
 
 	apiRouter := r.PathPrefix("/api").Subrouter()
 
-	f := api.NewFeed(db, &key.PublicKey)
+	f := api.NewFeed(db)
 	apiRouter.HandleFunc("/feed", f.GetFeed).Methods("GET")
 
-	b := api.NewBookmark(db, key)
+	b := api.NewBookmark(db)
 	apiRouter.HandleFunc("/bookmark", b.AddBookmark).Methods("POST")
 
-	d := api.NewDebug(db, key)
+	d := api.NewDebug(db)
 	apiRouter.HandleFunc("/debug", d.GetDebug).Methods("GET")
 
 	r.Handle("/{path:.*}", http.FileServer(http.Dir("server/data/static/build")))

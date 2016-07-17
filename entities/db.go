@@ -167,7 +167,6 @@ func (db *DB) Get(id string, dst interface{}) error {
 	entityType := reflect.ValueOf(dst).Elem().Type()
 	entity := reflect.New(entityType).Interface()
 
-	// TODO check if err is io.EOF
 	for k, v, err := i.Next(); err == nil; k, v, err = i.Next() {
 		components := bytes.Split(k, Separator)
 		// eav/123/user/name = Andrew
@@ -182,6 +181,7 @@ func (db *DB) Get(id string, dst interface{}) error {
 			}
 		}
 	}
+	reflect.ValueOf(dst).Elem().Set(reflect.ValueOf(entity).Elem())
 	return nil
 }
 

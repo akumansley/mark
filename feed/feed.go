@@ -9,6 +9,41 @@ import (
 	"github.com/square/go-jose"
 )
 
+// Converter deserializes an op's body
+type Converter func([]byte) (interface{}, error)
+
+// Coder can marshal and unmarshal a feed
+type Coder struct {
+	registry map[string]Converter
+}
+
+// NewCoder returns a new coder
+func NewCoder() *Coder {
+	return &Coder{registry: make(map[string]Converter)}
+}
+
+// RegisterOp tells a coder how to interpret an op type's body
+func (c *Coder) RegisterOp(name string, cf Converter) {
+	c.registry[name] = cf
+}
+
+// Encode turns a feed into bytes
+func (c *Coder) Encode(f *Feed) ([]byte, error) {
+	return json.Marshal(f)
+}
+
+// Decode turns bytes into a feed
+func (c *Coder) Decode(bytes []byte) (*Feed, error) {
+	var f Feed
+
+	json.Unmarshal(bytes, &f)
+	for i := range f.Ops {
+		f.Ops[i].DecodeBody(c.registry)
+	}
+
+	return &f, nil
+}
+
 // Op is an arbitrary operation
 type Op struct {
 	Op       string
@@ -39,6 +74,13 @@ func (op *Op) MarshalJSON() ([]byte, error) {
 	return json.Marshal(obj)
 }
 
+// DecodeBody loads an op's body from json
+func (op *Op) DecodeBody(registry map[string]Converter) error {
+	body, err := registry[op.Op](op.RawBody)
+	op.Body = body
+	return err
+}
+
 // Feed is a sequence of operations
 type Feed struct {
 	Ops []Op
@@ -53,21 +95,24 @@ func DeclareKey(key *rsa.PublicKey) (*Op, error) {
 	return &Op{Op: "declare-key", Body: jwk}, nil
 }
 
+// New bootstraps a feed
+func New(key *rsa.PrivateKey) (*Feed, error) {
+	var ops []Op
+	declareKeyOp, err := DeclareKey(&key.PublicKey)
+	if err != nil {
+		return nil, err
+	}
+	declareKeyOp.OpNum = 0
+	feed := Feed{Ops: ops}
+	feed.Ops = append(feed.Ops, *declareKeyOp)
+	return &feed, nil
+}
+
 // FromBytes inflates a Feed object from binary
 func FromBytes(bytes []byte) (*Feed, error) {
 	var feed Feed
 	if len(bytes) == 0 {
 
-		// // bootstrap a new feed
-		// var ops []Op
-		// declareKeyOp, err := DeclareKey(key)
-		// if err != nil {
-		// 	return nil, err
-		// }
-		// declareKeyOp.OpNum = 0
-		// feed = Feed{Ops: ops}
-		// feed.Ops = append(feed.Ops, *declareKeyOp)
-		// return &feed, nil
 		return nil, errors.New("bytes is empty")
 	}
 	err := json.Unmarshal(bytes, &feed)
@@ -137,6 +182,19 @@ func (feed *Feed) CurrentKey() (*jose.JsonWebKey, error) {
 // Fingerprint returns a fingerprint of a pub key
 func (feed *Feed) Fingerprint() ([]byte, error) {
 	jwk, err := feed.CurrentKey()
+	if err != nil {
+		return nil, err
+	}
+	thumbprint, err := jwk.Thumbprint(crypto.SHA256)
+	if err != nil {
+		return nil, err
+	}
+	return thumbprint, nil
+}
+
+// Fingerprint returns a fingerprint of a pub key
+func Fingerprint(key *rsa.PublicKey) ([]byte, error) {
+	jwk, err := AsJWK(key)
 	if err != nil {
 		return nil, err
 	}

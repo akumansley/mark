@@ -10,7 +10,6 @@ import (
 // Feed represents bookmarks across users
 type Feed struct {
 	db *app.DB
-	u  *app.User
 }
 
 // NewFeed builds a feed resource

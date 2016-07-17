@@ -4,7 +4,6 @@ import (
 	"crypto/rsa"
 
 	"github.com/awans/mark/entities"
-	"github.com/awans/mark/feed"
 )
 
 // DB is the application-level DB interface
@@ -35,7 +34,11 @@ func (db *DB) AddBookmark(b Bookmark) {
 	db.e.Add(b)
 }
 
-// UserFeed returns the user's feed
-func (db *DB) UserFeed() (*feed.Feed, error) {
-	return db.e.UserFeed()
+// DebugFeed returns the user's feed
+func (db *DB) DebugFeed() ([]byte, error) {
+	feed, err := db.e.UserFeed()
+	if err != nil {
+		return nil, err
+	}
+	return feed.ToBytes(db.key)
 }

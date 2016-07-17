@@ -20,12 +20,9 @@ const usage = `mark
 
 Usage:
   mark init
-  mark list
-  mark add <url>
-	mark feed
 	mark serve`
 
-func initDbAndKeys() error {
+func initFeed() error {
 	markDir := os.Getenv("MARK_DIR")
 
 	if markDir == "" {
@@ -43,11 +40,22 @@ func initDbAndKeys() error {
 	}
 	defer store.Close()
 
-	_, err = feed.CreateKeys(markDir)
+	key, err := feed.CreateKeys(markDir)
 	if err != nil {
 		return err
 	}
-	return nil
+
+	feed, err := feed.New(key)
+	if err != nil {
+		return err
+	}
+
+	fp, err := feed.Fingerprint()
+	if err != nil {
+		return err
+	}
+	db := entities.NewDB(store, fp)
+	return db.PutFeed(feed)
 }
 
 func openDbAndKeys() (*rsa.PrivateKey, *entities.DB, error) {
@@ -65,7 +73,13 @@ func openDbAndKeys() (*rsa.PrivateKey, *entities.DB, error) {
 		return nil, nil, err
 	}
 
-	db := entities.NewDB(store)
+	fp, err := feed.Fingerprint(&key.PublicKey)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	db := entities.NewDB(store, fp)
+	db.RebuildIndexes()
 
 	return key, db, nil
 }
@@ -78,7 +92,7 @@ func serve(db *entities.DB, key *rsa.PrivateKey) error {
 		db.Close()
 		os.Exit(0)
 	}()
-	
+
 	appDB := app.NewDB(db, key)
 
 	s := server.New(appDB)
@@ -90,7 +104,7 @@ func main() {
 	args, _ := docopt.Parse(usage, nil, true, "Mark 0", false)
 
 	if args["init"].(bool) {
-		err := initDbAndKeys()
+		err := initFeed()
 		if err != nil {
 			log.Fatal(err)
 		}

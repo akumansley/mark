@@ -79,3 +79,6 @@ const HIDE_TITLE = "HIDE_TITLE";
 
 export const showTitle = createAction(SHOW_TITLE);
 export const hideTitle = createAction(HIDE_TITLE);
+
+const UPDATE_URL = "UPDATE_URL";
+export const updateUrl = createAction(UPDATE_URL);

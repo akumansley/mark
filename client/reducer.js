@@ -42,9 +42,23 @@ function showTitle(state=false, action) {
   }
 }
 
+function url(state="", action) {
+  switch(action.type) {
+    case 'UPDATE_URL':
+      return action.payload;
+    case 'ADD_MARK_SUCCESS':
+      return "";
+    case 'ADD_MARK_FAILED':
+      return "";
+    default:
+      return state
+  }
+}
+
 const reducer = combineReducers({
   bookmarks,
-  showTitle
+  showTitle,
+  url
 });
 
 export default reducer;

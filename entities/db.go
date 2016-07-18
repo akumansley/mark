@@ -257,7 +257,6 @@ func (db *DB) Add(src interface{}) error {
 		return err
 	}
 	id := u.String()
-	fmt.Printf("id: %s", id)
 	db.Put(id, src)
 	return nil
 }

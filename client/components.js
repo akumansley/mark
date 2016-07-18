@@ -38,14 +38,13 @@ var input = {
 }
 
 export function Add(props) {
-    const {addMark, showTitle, hideTitle} = props;
+    const {addMark, showTitle, hideTitle, updateUrl} = props;
     const onSubmit = evt => {
         const input = evt.target;
         const url = input.value;
         const isEnter = (evt.which === 13);
 
         if (isEnter) {
-            input.value = '';
             addMark(url);
         }
     }
@@ -53,9 +52,12 @@ export function Add(props) {
       showTitle();
     }
     const onBlur = evt => {
-      if (!evt.target.value) {
+      if (!props.url) {
         hideTitle();
       }
+    }
+    const onChange = evt => {
+      updateUrl(evt.target.value);
     }
 
     let title;
@@ -71,9 +73,11 @@ export function Add(props) {
             {title}
             <input
               key="url"
+              value={props.url}
               style={input}
               placeholder="Add.."
               onKeyDown={onSubmit}
+              onChange={onChange}
               onFocus={onFocus}
               onBlur={onBlur}
               type="text"></input>

@@ -14,16 +14,18 @@ function bookmarks(state=initBookmarks, action) {
       return state.set('loading', true);
     case 'FETCH_FEED_SUCCESS':
       return state.set('loading', false)
-                  .set('items', action.items);
+                  .set('items', action.payload);
     case 'FETCH_FEED_FAILED':
       return state.set('loading', false)
-                  .set('error', action.error);
-    case 'ADD_BOOKMARK':
-      return state.push(Map(action.payload));
-    case 'ADD_BOOKMARK_SUCCESS':
-      return state.push(Map(action.payload));
-    case 'ADD_BOOKMARK_FAILED':
-      return state.push(Map(action.payload));
+                  .set('error', action.payload);
+    case 'POST_MARK':
+      return state.set('loading', true);
+    case 'ADD_MARK_SUCCESS':
+      return state.set('loading', false)
+                  .update('items', i => i.push(action.payload));
+    case 'ADD_MARK_FAILED':
+      return state.set('loading', false)
+                  .set('error', action.payload);
     default:
       return state;
   }

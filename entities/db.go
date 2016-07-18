@@ -29,7 +29,7 @@ func ConvertDatoms(bytes []byte) (interface{}, error) {
 func ConvertJWK(bytes []byte) (interface{}, error) {
 	var jwk jose.JsonWebKey
 	err := json.Unmarshal(bytes, &jwk)
-	return jwk, err
+	return &jwk, err
 }
 
 // NewDB is a constructor for a db

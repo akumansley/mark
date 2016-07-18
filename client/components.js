@@ -86,6 +86,9 @@ var urlStyle = {
 var leftStyle = {
   flex: 1,
 }
+var moreStyle = {
+  marginTop: '16px'
+}
 
 export function Feed(props) {
     const {items} = props;
@@ -96,11 +99,11 @@ export function Feed(props) {
                     <div style={itemStyle} key={i.get('id')}>
                       <div style={leftStyle}>
                         <div style={handleStyle}>awans</div>
-                        <div style={titleStyle}>{i.get('url')}</div>
-                        <div style={urlStyle}>{i.get('id')}</div>
+                        <div style={titleStyle}>{i.get('title')}</div>
+                        <div style={urlStyle}>{i.get('url')}</div>
                       </div>
                       <div>
-                        <img src={moreSrc}/>
+                        <img style={moreStyle} src={moreSrc}/>
                       </div>
                     </div>
                 )

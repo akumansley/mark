@@ -166,7 +166,8 @@ func (feed *Feed) CurrentKey() (*jose.JsonWebKey, error) {
 		if op.Op == "declare-key" {
 			// this case indicates that i should do something better at unmarshal time
 			if op.Body != nil {
-				return op.Body.(*jose.JsonWebKey), nil
+				jwk := op.Body.(*jose.JsonWebKey)
+				return jwk, nil
 			}
 			var jwk jose.JsonWebKey
 			err := json.Unmarshal(op.RawBody, &jwk)

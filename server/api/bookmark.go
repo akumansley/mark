@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -39,7 +38,6 @@ func (b *Bookmark) AddBookmark(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	fmt.Printf("bm: %s", bookmark)
 	b.db.AddBookmark(bookmark)
 	if err != nil {
 		panic(err)

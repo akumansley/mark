@@ -32,6 +32,8 @@
     "radium": "~0.17.1",
     "i": "~0.3.5",
     "isomorphic-fetch": "~2.2.1",
-    "redux-thunk": "~2.1.0"
+    "redux-thunk": "~2.1.0",
+    "redux-action": "~1.0.0",
+    "redux-actions": "~0.10.1"
   }
 }

@@ -1,6 +1,6 @@
 import  { connect } from 'react-redux';
 import * as components from './components';
-import { fetchFeed } from './actions';
+import { fetchFeed, addMark } from './actions';
 
 export const Feed = connect(
   function mapStateToProps(state) {
@@ -10,6 +10,6 @@ export const Feed = connect(
 
 export const Add = connect(null,
   function mapDispatchToProps(dispatch) {
-    return { addMark: url => {dispatch(addMark(url));} }
+    return { addMark: url => {dispatch(addMark(url, "TODO: Implement"));} }
   }
 )(components.Add);

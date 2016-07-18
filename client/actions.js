@@ -72,3 +72,10 @@ export function addMark(url, title) {
       .catch(err => dispatch(addMarkFailed(err)));
   }
 }
+
+
+const SHOW_TITLE = "SHOW_TITLE";
+const HIDE_TITLE = "HIDE_TITLE";
+
+export const showTitle = createAction(SHOW_TITLE);
+export const hideTitle = createAction(HIDE_TITLE);

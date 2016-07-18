@@ -23,21 +23,22 @@ export function Header(props) {
 
 var inputWrapper = {
     display: "flex",
-    flexDirection: "row",
-    alignItems: "center",
-    height: "48px",
+    flexDirection: "column",
+    alignItems: "stretch",
     paddingLeft: "12px",
 }
 var input = {
   border: "none",
+  height: "48px",
   fontSize: "inherit",
+  display: "block",
   ":focus": {
     outline: "none",
   },
 }
 
 export function Add(props) {
-    const {addMark} = props;
+    const {addMark, showTitle, hideTitle} = props;
     const onSubmit = evt => {
         const input = evt.target;
         const url = input.value;
@@ -48,11 +49,33 @@ export function Add(props) {
             addMark(url);
         }
     }
+    const onFocus = evt => {
+      showTitle();
+    }
+    const onBlur = evt => {
+      if (!evt.target.value) {
+        hideTitle();
+      }
+    }
+
+    let title;
+    if (props.shouldShowTitle) {
+      title = (
+        <input key="title" style={input}
+          placeholder="Title.."
+          type="text"></input>
+      )
+    }
     return (
         <div style={inputWrapper}>
-            <input style={input}
+            {title}
+            <input
+              key="url"
+              style={input}
               placeholder="Add.."
               onKeyDown={onSubmit}
+              onFocus={onFocus}
+              onBlur={onBlur}
               type="text"></input>
         </div>
     )

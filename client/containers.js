@@ -1,6 +1,6 @@
 import  { connect } from 'react-redux';
 import * as components from './components';
-import { fetchFeed, addMark } from './actions';
+import { fetchFeed, addMark, showTitle, hideTitle } from './actions';
 
 export const Feed = connect(
   function mapStateToProps(state) {
@@ -8,8 +8,15 @@ export const Feed = connect(
   }
 )(components.Feed);
 
-export const Add = connect(null,
+export const Add = connect(
+  function mapStateToProps(state) {
+    return { shouldShowTitle: state.showTitle };
+  },
   function mapDispatchToProps(dispatch) {
-    return { addMark: url => {dispatch(addMark(url, "TODO: Implement"));} }
+    return {
+      addMark: url => {dispatch(addMark(url, "TODO: Implement"))},
+      showTitle: () => {dispatch(showTitle())},
+      hideTitle: () => {dispatch(hideTitle())},
+    }
   }
 )(components.Add);

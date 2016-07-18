@@ -31,8 +31,20 @@ function bookmarks(state=initBookmarks, action) {
   }
 }
 
+function showTitle(state=false, action) {
+  switch (action.type) {
+    case 'SHOW_TITLE':
+      return true;
+    case 'HIDE_TITLE':
+      return false;
+    default:
+      return state;
+  }
+}
+
 const reducer = combineReducers({
   bookmarks,
+  showTitle
 });
 
 export default reducer;

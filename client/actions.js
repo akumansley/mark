@@ -1,6 +1,8 @@
 import fetch from 'isomorphic-fetch'
 import Immutable from 'immutable';
 import { createAction } from 'redux-actions';
+import { isWebUri } from 'valid-url';
+import _ from 'lodash';
 
 const uid = () => Math.random().toString(34).slice(2);
 
@@ -74,11 +76,42 @@ export function addMark(url, title) {
 }
 
 
-const SHOW_TITLE = "SHOW_TITLE";
-const HIDE_TITLE = "HIDE_TITLE";
-
-export const showTitle = createAction(SHOW_TITLE);
-export const hideTitle = createAction(HIDE_TITLE);
-
 const UPDATE_URL = "UPDATE_URL";
-export const updateUrl = createAction(UPDATE_URL);
+const LOAD_TITLE = "LOAD_TITLE";
+const LOAD_TITLE_SUCCESS = "LOAD_TITLE_SUCCESS";
+const LOAD_TITLE_FAILED = "LOAD_TITLE_FAILED";
+
+const UPDATE_TITLE = "UPDATE_TITLE";
+
+const loadTitleSuccess = createAction(LOAD_TITLE_SUCCESS);
+const loadTitleFailed = createAction(LOAD_TITLE_FAILED);
+
+export const updateTitle = createAction(UPDATE_TITLE);
+
+function loadTitleRaw(url) {
+  return dispatch => {
+    let qs = "?url=" + encodeURIComponent(url)
+    return fetch('/views/title' + qs)
+    .then(res => {
+      if (res.status >= 400) {
+        throw new Error(res.status);
+      }
+      return res.text();
+    }).then(title => dispatch(loadTitleSuccess(title)))
+    .catch(err => dispatch(loadTitleFailed(err)));
+  }
+}
+
+const loadTitle = _.throttle(loadTitleRaw, 300);
+
+export function updateUrl(url) {
+  return dispatch =>  {
+    dispatch({
+      type: UPDATE_URL,
+      payload: url
+    });
+    if (isWebUri(url)) {
+      dispatch(loadTitle(url));
+    }
+  }
+}

@@ -13,7 +13,7 @@ module.exports = {
             loaders: ['react-hot', 'babel?presets[]=es2015&presets[]=react'],
         },
         {
-           test: /\.(png|jpg)$/, 
+           test: /\.(png|jpg)$/,
            loader: 'url-loader?limit=8192'  // inline base64 URLs for <=8k images, direct URLs for the rest
         }
       ]
@@ -27,6 +27,12 @@ module.exports = {
     })],
     devServer: {
         proxy: {
+            "/views/*": {
+                "target": {
+                    "host": "localhost",
+                    "port": 8081,
+                }
+            },
             "/api/*": {
                 "target": {
                     "host": "localhost",

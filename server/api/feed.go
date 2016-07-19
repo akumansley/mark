@@ -23,6 +23,9 @@ func (f *Feed) GetFeed(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
+	if bookmarks == nil {
+		bookmarks = make([]app.Bookmark,0)
+	}
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	json.NewEncoder(w).Encode(bookmarks)

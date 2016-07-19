@@ -40,7 +40,8 @@ func New(db *app.DB) http.Handler {
 	d := api.NewDebug(db)
 	apiRouter.HandleFunc("/debug", d.GetDebug).Methods("GET")
 
-	r.HandleFunc("/title", TitleHandler).Methods("GET")
+	viewsRouter := r.PathPrefix("/views").Subrouter()
+	viewsRouter.HandleFunc("/title", TitleHandler).Methods("GET")
 
 	r.Handle("/{path:.*}", http.FileServer(http.Dir("server/data/static/build")))
 	return r

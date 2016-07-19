@@ -1,5 +1,7 @@
 import { List, Map } from 'immutable';
 import { combineReducers } from 'redux';
+import { routerReducer } from 'react-router-redux'
+
 
 const initBookmarks = Map({
   items: List([]),
@@ -33,9 +35,9 @@ function bookmarks(state=initBookmarks, action) {
 
 function showTitle(state=false, action) {
   switch (action.type) {
-    case 'SHOW_TITLE':
-      return true;
-    case 'HIDE_TITLE':
+    case 'UPDATE_URL':
+      return action.payload !== "";
+    case 'ADD_MARK_SUCCESS':
       return false;
     default:
       return state;
@@ -49,16 +51,39 @@ function url(state="", action) {
     case 'ADD_MARK_SUCCESS':
       return "";
     case 'ADD_MARK_FAILED':
-      return "";
+      return state;
     default:
       return state
+  }
+}
+
+// Probably want to track a bit saying whether the user's edited the current title
+function title(state="", action) {
+  switch(action.type) {
+    case 'LOAD_TITLE_SUCCESS':
+      return action.payload;
+    case 'LOAD_TITLE_FAILED':
+      return state;
+    case 'ADD_MARK_SUCCESS':
+      return "";
+    case 'UPDATE_TITLE':
+      return action.payload;
+    case 'UPDATE_URL':
+      if (action.payload === "") {
+        return ""
+      }
+      return state
+    default:
+      return state;
   }
 }
 
 const reducer = combineReducers({
   bookmarks,
   showTitle,
-  url
+  url,
+  title,
+  routing: routerReducer
 });
 
 export default reducer;

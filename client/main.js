@@ -1,12 +1,18 @@
 import React from 'react';
 import { render } from 'react-dom';
 import { App } from './app';
+import { Feed } from './components/feed/feed'
+import { Me } from './components/me/me'
 
 import { createStore, applyMiddleware } from 'redux';
 import reducer from './reducer';
 import { fetchFeed } from './actions';
 import { Provider } from 'react-redux';
 import thunkMiddleware from 'redux-thunk';
+
+import { syncHistoryWithStore } from 'react-router-redux'
+import { Router, Route, browserHistory, IndexRoute } from 'react-router'
+
 
 const logger = store => next => action => {
   console.log('dispatching', action)
@@ -15,16 +21,24 @@ const logger = store => next => action => {
   return result
 }
 
+
+
 const store = createStore(
   reducer,
   applyMiddleware(thunkMiddleware, logger)
 );
 
+const history = syncHistoryWithStore(browserHistory, store)
 store.dispatch(fetchFeed());
 
 render(
   <Provider store={store}>
-    <App />
+    <Router history={history}>
+      <Route path="/" component={App}>
+        <IndexRoute component={Feed} />
+        <Route path="me" component={Me} />
+      </Route>
+    </Router>
   </Provider>,
   document.getElementById('app')
 );

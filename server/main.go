@@ -25,6 +25,11 @@ func TitleHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(sanitized))
 }
 
+// IndexHandler serves index.html (ie the SPA)
+func IndexHandler(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "server/data/static/build/index.html")
+}
+
 // New returns a new mark server
 func New(db *app.DB) http.Handler {
 	r := mux.NewRouter()
@@ -43,6 +48,7 @@ func New(db *app.DB) http.Handler {
 	viewsRouter := r.PathPrefix("/views").Subrouter()
 	viewsRouter.HandleFunc("/title", TitleHandler).Methods("GET")
 
-	r.Handle("/{path:.*}", http.FileServer(http.Dir("server/data/static/build")))
+	r.Handle("/bundle.js", http.FileServer(http.Dir("server/data/static/build")))
+	r.HandleFunc("/{path:.*}", IndexHandler).Methods("GET")
 	return r
 }

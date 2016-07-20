@@ -39,6 +39,7 @@
     "lodash": "~4.13.1",
     "react-addons-css-transition-group": "~15.0.3-alpha.2",
     "react-router": "~2.6.0",
-    "react-router-redux": "~4.0.5"
+    "react-router-redux": "~4.0.5",
+    "reselect": "~2.5.3"
   }
 }

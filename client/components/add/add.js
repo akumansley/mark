@@ -11,7 +11,7 @@ var inputWrapper = {
     flexDirection: "column",
     alignItems: "stretch",
     paddingLeft: "12px",
-    margin: "8px 0"
+    margin: "18px 0"
 }
 var input = {
     border: "none",

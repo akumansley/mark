@@ -3,6 +3,7 @@ import Radium from 'radium';
 import Colors from '../../colors';
 import { connect } from 'react-redux';
 import { Add } from '../add/add';
+import { createSelector } from 'reselect';
 
 var moreSrc = require('../../assets/more.png');
 
@@ -17,7 +18,10 @@ var itemStyle = {
 
 var titleStyle = {
   lineHeight: "1.2",
-  marginBottom: -2
+  marginBottom: -2,
+  display: "block",
+  color: Colors.primaryText,
+  textDecoration: "none",
 };
 
 var urlStyle = {
@@ -47,8 +51,8 @@ const Component = props => {
                 return (
                     <div style={itemStyle} key={i.get('id')}>
                       <div style={leftStyle}>
-                        <div style={titleStyle}>{i.get('title')}</div>
-                        <span style={urlStyle}> {i.get('url')}</span>
+                        <a href={i.get('url')} style={titleStyle}>{i.get('title')}</a>
+                        <span style={urlStyle}> {i.get('short_url')}</span>
                       </div>
                       <div>
                       </div>
@@ -62,9 +66,23 @@ const Component = props => {
 
 const Styled = Radium(Component)
 
+const selectItems = state => state.bookmarks.get('items');
+
+function shortUrl(url) {
+  const u = new URL(url);
+  let r = u.hostname + u.pathname;
+  r = r.endsWith("/") ? r.slice(0, -1) : r;
+  r = r.endsWith(".html") ? r.slice(0, -5) : r;
+  return r;
+}
+
+const mixShortUrl = createSelector([selectItems], items => {
+  return items.map(i => i.set('short_url', shortUrl(i.get('url')) ));
+});
+
 const Connected = connect(
   function mapStateToProps(state) {
-    return { items: state.bookmarks.get('items') }
+    return { items: mixShortUrl(state) }
   }
 )(Styled);
 

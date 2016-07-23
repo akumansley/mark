@@ -1,6 +1,9 @@
 package entities
 
-import "fmt"
+import (
+	"fmt"
+	"encoding/json"
+)
 
 // Datom is an entity-attribute-value statement
 type Datom struct {
@@ -9,6 +12,30 @@ type Datom struct {
 	Value     interface{}
 	Added     bool
 }
+
+func (d *Datom) MarshalJSON() ([]byte, error) {
+	var ary []interface{}
+	ary = append(ary, d.EntityID)
+	ary = append(ary, d.Attribute)
+	ary = append(ary, d.Value)
+	ary = append(ary, d.Added)
+	return json.Marshal(ary)
+}
+
+func (d *Datom) UnmarshalJSON(data []byte) error {
+	var ary []interface{}
+	err := json.Unmarshal(data, &ary)
+	if err != nil {
+		return err
+	}
+	d.EntityID = ary[0].(string)
+	d.Attribute = ary[1].(string)
+	d.Value = ary[2]
+	d.Added = ary[3].(bool)
+	return nil
+}
+
+
 
 // EAVKey returns the key in the EAV index for this datom
 func (d *Datom) EAVKey() []byte {

@@ -142,7 +142,7 @@ func getKindFromInstance(instance interface{}) string {
 // GetAll returns all entities of a given type
 func (db *DB) GetAll(dst interface{}) error {
 	kind := getKindFromSlicePtr(dst)
-	prefix := NewKey("ave", "db/kind", kind)
+	prefix := NewKey("ave", "db/Kind", kind)
 	i, err := db.store.Prefix(prefix.ToBytes())
 	if err != nil {
 		return err
@@ -210,14 +210,30 @@ func (db *DB) Put(id string, src interface{}) error {
 	c := reflect.ValueOf(src)
 	cType := c.Type()
 
+	feed, err := db.UserFeed()
+	if err != nil {
+		return err
+	}
+
 	var datoms []Datom
-	d := Datom{
+	kd := Datom{
 		EntityID:  id,
-		Attribute: "db/kind",
+		Attribute: "db/Kind",
 		Value:     kind,
 		Added:     true,
 	}
-	datoms = append(datoms, d)
+	datoms = append(datoms, kd)
+	fp, err := feed.Fingerprint()
+	if err != nil {
+		return err
+	}
+	fd := Datom{
+		EntityID:  id,
+		Attribute: "db/FeedID",
+		Value:     fp,
+		Added:     true,
+	}
+	datoms = append(datoms, fd)
 
 	for i := 0; i < cType.NumField(); i++ {
 		valueField := c.Field(i)
@@ -225,18 +241,13 @@ func (db *DB) Put(id string, src interface{}) error {
 
 		attrName := kind + "/" + typeField.Name
 
-		d = Datom{
+		d := Datom{
 			EntityID:  id,
 			Attribute: attrName,
 			Value:     valueField.Interface(),
 			Added:     true,
 		}
 		datoms = append(datoms, d)
-	}
-
-	feed, err := db.UserFeed()
-	if err != nil {
-		return err
 	}
 
 	op := eavOp(datoms)

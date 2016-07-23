@@ -23,8 +23,18 @@
       opacity: 1;
       transition: opacity .5s ease-in;
     }
+    .underline-if-active {
+      background-size: 25% 2px;
+    }
     .active > .underline-if-active {
-      border-bottom: 1px solid #e0a5f3;
+      background: linear-gradient(#fff 50%, #e28aff 50%) center 1.07em no-repeat;
+      padding: 0 2px;
+      margin: 0 -2px;
+      background-size: 85% 2px;
+      transition: background-size .2s ease;
+    }
+    .active > .underline-if-active:hover {
+      background-size: 100% 2px;
     }
     body {
       background: #fff;

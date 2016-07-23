@@ -6,7 +6,7 @@ import { Me } from './components/me/me'
 
 import { createStore, applyMiddleware } from 'redux';
 import reducer from './reducer';
-import { fetchFeed } from './actions';
+import { fetchStream } from './actions';
 import { Provider } from 'react-redux';
 import thunkMiddleware from 'redux-thunk';
 
@@ -29,7 +29,7 @@ const store = createStore(
 );
 
 const history = syncHistoryWithStore(browserHistory, store)
-store.dispatch(fetchFeed());
+store.dispatch(fetchStream());
 
 render(
   <Provider store={store}>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, IndexLink } from 'react-router'
 import Colors from '../../colors';
+import Radium from 'radium';
 
 const headerStyles = {
   marginTop: "48px",
@@ -15,11 +16,18 @@ const linkStyle = {
 const activeStyle = {
   color: Colors.accent,
 }
-export function Header(props) {
+
+function Component(props) {
     return (
         <div style={headerStyles}>
-          <IndexLink activeStyle={activeStyle} style={linkStyle} to="/">Feed</IndexLink>
-          <Link activeStyle={activeStyle} style={linkStyle} to="/me">Me</Link>
+          <IndexLink activeStyle={activeStyle} activeClassName="active" style={linkStyle} to="/">
+            <span className="underline-if-active">All</span>
+          </IndexLink>
+          <Link activeStyle={activeStyle} activeClassName="active" style={linkStyle} to="/me">
+            <span className="underline-if-active">Me</span>
+          </Link>
         </div>
     )
 }
+
+export const Header = Radium(Component);

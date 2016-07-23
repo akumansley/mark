@@ -12,12 +12,12 @@ const initBookmarks = Map({
 
 function bookmarks(state=initBookmarks, action) {
   switch (action.type) {
-    case 'FETCH_FEED':
+    case 'FETCH_STREAM':
       return state.set('loading', true);
-    case 'FETCH_FEED_SUCCESS':
+    case 'FETCH_STREAM_SUCCESS':
       return state.set('loading', false)
                   .set('items', action.payload);
-    case 'FETCH_FEED_FAILED':
+    case 'FETCH_STREAM_FAILED':
       return state.set('loading', false)
                   .set('error', action.payload);
     case 'POST_MARK':

@@ -6,45 +6,45 @@ import _ from 'lodash';
 
 const uid = () => Math.random().toString(34).slice(2);
 
-export const REQUEST_FEED = 'REQUEST_FEED';
-function requestFeed() {
+export const REQUEST_STREAM = 'REQUEST_STREAM';
+function requestStream() {
   return {
-    type: REQUEST_FEED,
+    type: REQUEST_STREAM,
   }
 }
 
-export const FETCH_FEED_SUCCESS = 'FETCH_FEED_SUCCESS';
-function fetchFeedSuccess(items) {
+export const FETCH_STREAM_SUCCESS = 'FETCH_STREAM_SUCCESS';
+function fetchStreamSuccess(items) {
   return {
-    type: FETCH_FEED_SUCCESS,
+    type: FETCH_STREAM_SUCCESS,
     payload: items,
   }
 }
 
-export const FETCH_FEED_FAILED = 'FETCH_FEED_FAILED';
-function fetchFeedFailed(error) {
+export const FETCH_STREAM_FAILED = 'FETCH_STREAM_FAILED';
+function fetchStreamFailed(error) {
   return {
-    type: FETCH_FEED_FAILED,
+    type: FETCH_STREAM_FAILED,
     payload: error,
     error: true
   }
 }
 
 // this is a thunk
-export function fetchFeed() {
+export function fetchStream() {
   return function (dispatch) {
     // start the request
-    dispatch(requestFeed());
+    dispatch(requestStream());
 
-    return fetch('/api/feed')
+    return fetch('/api/stream')
             .then(res => {
               if (res.status >= 400) {
                 throw new Error(res.status);
               }
               return res.json();
             })
-            .then(json => dispatch(fetchFeedSuccess(Immutable.fromJS(json))))
-            .catch(err => dispatch(fetchFeedFailed(err)));
+            .then(json => dispatch(fetchStreamSuccess(Immutable.fromJS(json))))
+            .catch(err => dispatch(fetchStreamFailed(err)));
   }
 }
 

@@ -3,13 +3,12 @@ package server
 import (
 	"net/http"
 
+	"github.com/NYTimes/gziphandler"
+	"github.com/PuerkitoBio/goquery"
 	"github.com/awans/mark/app"
 	"github.com/awans/mark/server/api"
 	"github.com/gorilla/mux"
-	"github.com/PuerkitoBio/goquery"
 	"github.com/kennygrant/sanitize"
-	"github.com/NYTimes/gziphandler"
-
 )
 
 // TitleHandler returns the page title of a url
@@ -37,8 +36,8 @@ func New(db *app.DB) http.Handler {
 
 	apiRouter := r.PathPrefix("/api").Subrouter()
 
-	f := api.NewFeed(db)
-	apiRouter.HandleFunc("/feed", f.GetFeed).Methods("GET")
+	s := api.NewStream(db)
+	apiRouter.HandleFunc("/stream", s.GetStream).Methods("GET")
 
 	b := api.NewBookmark(db)
 	apiRouter.HandleFunc("/bookmark", b.AddBookmark).Methods("POST")
@@ -52,6 +51,7 @@ func New(db *app.DB) http.Handler {
 
 	r.Handle("/bundle.js", http.FileServer(http.Dir("server/data/static/build")))
 	r.HandleFunc("/{path:.*}", IndexHandler).Methods("GET")
+
 	gz := gziphandler.GzipHandler(r)
 	return gz
 }

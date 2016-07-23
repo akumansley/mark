@@ -26,6 +26,7 @@ type Query struct {
 	db      *DB
 	filters []Filter
 	order   []Order
+	kind    string
 	limit   int
 	offset  int
 }

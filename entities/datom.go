@@ -50,11 +50,11 @@ func (d *Datom) AEVKey() []byte {
 // AVEKey returns the key in the AVE index for this datom
 // Has to include the entity ID for uniqueness
 func (d *Datom) AVEKey() []byte {
-	return NewKey("ave", d.Attribute, fmt.Sprint(d.Value), d.EntityID).ToBytes()
+	return NewKey("ave", d.Attribute, fmt.Sprintf("%s", d.Value), d.EntityID).ToBytes()
 }
 
 // VAEKey returns the key in the VAE index for this datom
 // Has to include the entity ID for uniqueness
 func (d *Datom) VAEKey() []byte {
-	return NewKey("vae", fmt.Sprint(d.Value), d.Attribute, d.EntityID).ToBytes()
+	return NewKey("vae", fmt.Sprintf("%s", d.Value), d.Attribute, d.EntityID).ToBytes()
 }

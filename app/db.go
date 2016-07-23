@@ -30,8 +30,9 @@ func (db *DB) GetFeed() ([]Bookmark, error) {
 }
 
 // AddBookmark inserts a bookmark into the db
-func (db *DB) AddBookmark(b Bookmark) {
-	db.e.Add(b)
+func (db *DB) AddBookmark(b *Bookmark) {
+	id, _ := db.e.Add(b)
+	b.ID = id
 }
 
 // DebugFeed returns the user's feed

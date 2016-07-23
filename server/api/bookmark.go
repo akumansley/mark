@@ -37,7 +37,7 @@ func (b *Bookmark) AddBookmark(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	b.db.AddBookmark(bookmark)
+	b.db.AddBookmark(&bookmark)
 	if err != nil {
 		panic(err)
 	}

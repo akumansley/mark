@@ -72,19 +72,29 @@ func (db *DB) RebuildIndexes() error {
 }
 
 // LoadFeed applies each op to the db in turn and saves it under the user/feed key
-func (db *DB) LoadFeed(feed *feed.Feed) {
-	for _, op := range feed.Ops {
-		db.applyOp(op)
+func (db *DB) LoadFeed(feed *feed.Feed) error {
+	fp, err := feed.Fingerprint()
+	if err != nil {
+		return err
 	}
+	for _, op := range feed.Ops {
+		db.applyOp(op, fp)
+	}
+	return nil
 }
 
-func (db *DB) applyOp(op feed.Op) {
+func (db *DB) applyOp(op feed.Op, fp []byte) {
 	if op.Op != "eav" {
 		return
 	}
 	datoms := op.Body.([]Datom)
+	entityIDs := make(map[string]bool)
 	for _, datom := range datoms {
 		db.applyDatom(datom)
+		entityIDs[datom.EntityID] = true
+	}
+	for entityID, _ := range entityIDs {
+		db.ensureSysKeys(entityID, fp)
 	}
 }
 
@@ -119,8 +129,8 @@ func (db *DB) applyDatom(d Datom) {
 	if d.Added {
 		// TODO value shouldn't always have to be a string
 		// maybe store it as gob?
-		db.store.Set(d.EAVKey(), []byte(fmt.Sprint(d.Value)))
-		db.store.Set(d.AEVKey(), []byte(fmt.Sprint(d.Value)))
+		db.store.Set(d.EAVKey(), []byte(fmt.Sprintf("%s", d.Value)))
+		db.store.Set(d.AEVKey(), []byte(fmt.Sprintf("%s", d.Value)))
 		db.store.Set(d.AVEKey(), []byte(d.EntityID))
 		db.store.Set(d.VAEKey(), []byte(d.EntityID))
 	} else {
@@ -131,12 +141,29 @@ func (db *DB) applyDatom(d Datom) {
 	}
 }
 
+func (db *DB) ensureSysKeys(entityID string, fp []byte) {
+	fd := Datom{
+		EntityID: entityID,
+		Attribute: "db/FeedID",
+		Value: fp,
+		Added: true,
+	}
+	db.applyDatom(fd)
+	idd := Datom{
+		EntityID: entityID,
+		Attribute: "db/ID",
+		Value: entityID,
+		Added: true,
+	}
+	db.applyDatom(idd)
+}
+
 func getKindFromSlicePtr(slice interface{}) string {
 	return reflect.ValueOf(slice).Elem().Type().Elem().Name()
 }
 
 func getKindFromInstance(instance interface{}) string {
-	return reflect.ValueOf(instance).Type().Name()
+	return reflect.ValueOf(instance).Type().Elem().Name()
 }
 
 // GetAll returns all entities of a given type
@@ -174,11 +201,7 @@ func (db *DB) Get(id string, dst interface{}) error {
 		field := reflect.ValueOf(entity).Elem().FieldByName(attr)
 		sv := string(v)
 		if field.IsValid() {
-			if attr == "ID" {
-				field.Set(reflect.ValueOf(id))
-			} else {
-				field.Set(reflect.ValueOf(sv))
-			}
+			field.Set(reflect.ValueOf(sv))
 		}
 	}
 	reflect.ValueOf(dst).Elem().Set(reflect.ValueOf(entity).Elem())
@@ -203,11 +226,15 @@ func eavOp(datoms []Datom) feed.Op {
 	return op
 }
 
+func isSysKey(s string) bool {
+	return s == "ID" || s == "FeedID"
+}
+
 // Put sets src at id
 // TODO load it first and store the delta
 func (db *DB) Put(id string, src interface{}) error {
 	kind := getKindFromInstance(src)
-	c := reflect.ValueOf(src)
+	c := reflect.ValueOf(src).Elem()
 	cType := c.Type()
 
 	feed, err := db.UserFeed()
@@ -223,21 +250,14 @@ func (db *DB) Put(id string, src interface{}) error {
 		Added:     true,
 	}
 	datoms = append(datoms, kd)
-	fp, err := feed.Fingerprint()
-	if err != nil {
-		return err
-	}
-	fd := Datom{
-		EntityID:  id,
-		Attribute: "db/FeedID",
-		Value:     fp,
-		Added:     true,
-	}
-	datoms = append(datoms, fd)
 
 	for i := 0; i < cType.NumField(); i++ {
 		valueField := c.Field(i)
 		typeField := cType.Field(i)
+
+		if isSysKey(typeField.Name) {
+			continue
+		}
 
 		attrName := kind + "/" + typeField.Name
 
@@ -257,17 +277,21 @@ func (db *DB) Put(id string, src interface{}) error {
 	if err != nil {
 		return err
 	}
-	db.applyOp(op)
+	fp, err := feed.Fingerprint()
+	if err != nil {
+		return err
+	}
+	db.applyOp(op, fp)
 	return nil
 }
 
 // Add adds a new entity to the db
-func (db *DB) Add(src interface{}) error {
+func (db *DB) Add(src interface{}) (id string, err error) {
 	u, err := uuid.NewV4()
 	if err != nil {
-		return err
+		return "", err
 	}
-	id := u.String()
+	id = u.String()
 	db.Put(id, src)
-	return nil
+	return id, nil
 }

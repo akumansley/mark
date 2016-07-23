@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/kennygrant/sanitize"
+	"github.com/NYTimes/gziphandler"
 
 )
 
@@ -43,6 +44,7 @@ func New(db *app.DB) http.Handler {
 	apiRouter.HandleFunc("/bookmark", b.AddBookmark).Methods("POST")
 
 	d := api.NewDebug(db)
+
 	apiRouter.HandleFunc("/debug", d.GetDebug).Methods("GET")
 
 	viewsRouter := r.PathPrefix("/views").Subrouter()
@@ -50,5 +52,6 @@ func New(db *app.DB) http.Handler {
 
 	r.Handle("/bundle.js", http.FileServer(http.Dir("server/data/static/build")))
 	r.HandleFunc("/{path:.*}", IndexHandler).Methods("GET")
-	return r
+	gz := gziphandler.GzipHandler(r)
+	return gz
 }

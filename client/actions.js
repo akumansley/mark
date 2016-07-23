@@ -60,6 +60,10 @@ const addMarkFailed = createAction(ADD_MARK_FAILED);
 export function addMark(url, title) {
   return dispatch => {
     dispatch(postMark());
+    if (!isWebUri(url)) {
+      dispatch(addMarkFailed(new Error("Invalid URL")))
+      return;
+    }
 
     return fetch('/api/bookmark', { method: "POST", body: JSON.stringify({
         url: url,

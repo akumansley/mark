@@ -10,13 +10,14 @@ var inputWrapper = {
     display: "flex",
     flexDirection: "column",
     alignItems: "stretch",
-    margin: "24px 0"
+    margin: "12px 0"
 }
 var input = {
     border: "none",
     fontSize: "inherit",
     fontWeight: "300",
     display: "block",
+    margin: "12px 0",
     ":focus": {
         outline: "none"
     }

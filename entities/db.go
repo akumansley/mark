@@ -18,6 +18,10 @@ type DB struct {
 	c     *feed.Coder
 }
 
+func (db *DB) NewQuery(kind string) *Query {
+	return &Query{db: db, kind: kind}
+}
+
 // ConvertDatoms implements Converter
 func ConvertDatoms(bytes []byte) (interface{}, error) {
 	var ds []Datom
@@ -143,17 +147,17 @@ func (db *DB) applyDatom(d Datom) {
 
 func (db *DB) ensureSysKeys(entityID string, fp []byte) {
 	fd := Datom{
-		EntityID: entityID,
+		EntityID:  entityID,
 		Attribute: "db/FeedID",
-		Value: fp,
-		Added: true,
+		Value:     fp,
+		Added:     true,
 	}
 	db.applyDatom(fd)
 	idd := Datom{
-		EntityID: entityID,
+		EntityID:  entityID,
 		Attribute: "db/ID",
-		Value: entityID,
-		Added: true,
+		Value:     entityID,
+		Added:     true,
 	}
 	db.applyDatom(idd)
 }

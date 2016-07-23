@@ -4,6 +4,7 @@ import (
 	"crypto"
 	"crypto/rsa"
 	"encoding/json"
+	"encoding/base64"
 	"errors"
 
 	"github.com/square/go-jose"
@@ -180,17 +181,23 @@ func (feed *Feed) CurrentKey() (*jose.JsonWebKey, error) {
 	return nil, errors.New("Feed had no declared key")
 }
 
+func fingerprint(jwk *jose.JsonWebKey) ([]byte, error) {
+	thumbprint, err := jwk.Thumbprint(crypto.SHA256)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]byte, base64.RawURLEncoding.EncodedLen(len(thumbprint)))
+	base64.RawURLEncoding.Encode(out, thumbprint)
+	return out, nil
+}
+
 // Fingerprint returns a fingerprint of a pub key
 func (feed *Feed) Fingerprint() ([]byte, error) {
 	jwk, err := feed.CurrentKey()
 	if err != nil {
 		return nil, err
 	}
-	thumbprint, err := jwk.Thumbprint(crypto.SHA256)
-	if err != nil {
-		return nil, err
-	}
-	return thumbprint, nil
+	return fingerprint(jwk)
 }
 
 // Fingerprint returns a fingerprint of a pub key
@@ -199,9 +206,5 @@ func Fingerprint(key *rsa.PublicKey) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	thumbprint, err := jwk.Thumbprint(crypto.SHA256)
-	if err != nil {
-		return nil, err
-	}
-	return thumbprint, nil
+	return fingerprint(jwk)
 }

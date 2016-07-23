@@ -43,11 +43,18 @@ func New(db *app.DB) http.Handler {
 	apiRouter.HandleFunc("/bookmark", b.AddBookmark).Methods("POST")
 
 	d := api.NewDebug(db)
-
 	apiRouter.HandleFunc("/debug", d.GetDebug).Methods("GET")
 
 	viewsRouter := r.PathPrefix("/views").Subrouter()
 	viewsRouter.HandleFunc("/title", TitleHandler).Methods("GET")
+
+	syncRouter := r.PathPrefix("/sync").Subrouter()
+
+	syncRouter.HandleFunc("/pubs", TitleHandler).Methods("GET")
+	syncRouter.HandleFunc("/pubs", TitleHandler).Methods("POST")
+
+	syncRouter.HandleFunc("/heads", TitleHandler).Methods("GET")
+	syncRouter.HandleFunc("/feed/{id}", TitleHandler).Methods("GET")
 
 	r.Handle("/bundle.js", http.FileServer(http.Dir("server/data/static/build")))
 	r.HandleFunc("/{path:.*}", IndexHandler).Methods("GET")

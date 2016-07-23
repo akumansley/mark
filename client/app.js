@@ -12,18 +12,16 @@ var baseStyle = {
   lineHeight: "1.5",
   textRendering: "geometricPrecision",
   maxWidth: "650px",
-  margin: "0",
+  margin: "0px",
   '@media (min-width: 800px)': {
     margin: "0 100px",
   },
   '@media (min-width: 1000px)': {
     margin: "0 200px",
   },
-  borderLeft: "1px solid #eee",
-  borderRight: "1px solid #eee",
   padding: "24px",
   background: Colors.primaryBackground,
-}
+};
 
 export function App(props) {
     return (

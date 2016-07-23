@@ -3,7 +3,6 @@ import { Link, IndexLink } from 'react-router'
 import Colors from '../../colors';
 
 const headerStyles = {
-  paddingLeft: "12px",
   marginTop: "48px",
   display: "flex",
   flexDirection: "row",

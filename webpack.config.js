@@ -24,6 +24,7 @@ module.exports = {
     plugins: [new HtmlWebpackPlugin({
         title: "Mark",
         template: './client/index.html',
+        favicon: "./client/assets/m.png",
     })],
     devServer: {
         proxy: {

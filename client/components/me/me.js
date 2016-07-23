@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 import { Add } from '../add/add';
 
 const meStyle = {
-  paddingLeft: "12px",
+  marginTop: "24px",
 }
 
 const Component = props => {

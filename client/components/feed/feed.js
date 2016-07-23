@@ -1,14 +1,13 @@
-import React from 'react';
-import Radium from 'radium';
-import Colors from '../../colors';
-import { connect } from 'react-redux';
-import { Add } from '../add/add';
-import { createSelector } from 'reselect';
+import React from 'react'
+import Radium from 'radium'
+import Colors from '../../colors'
+import { connect } from 'react-redux'
+import { Add } from '../add/add'
+import { createSelector } from 'reselect'
 
-var moreSrc = require('../../assets/more.png');
+// var moreSrc = require('../../assets/more.png')
 
 var itemStyle = {
-  paddingLeft: 12,
   display: "flex",
   alignItems: "start",
   flexDirection: "row",
@@ -28,6 +27,9 @@ var urlStyle = {
   fontSize: "13px",
   color: Colors.secondaryText,
   fontWeight: "200",
+  overflowWrap: 'break-word',
+  wordWrap: 'break-word',
+  wordBreak: 'break-word',
 };
 
 var leftStyle = {

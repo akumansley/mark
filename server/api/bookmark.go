@@ -12,7 +12,6 @@ import (
 // Bookmark is a resource
 type Bookmark struct {
 	db *app.DB
-	u  *app.User
 }
 
 // NewBookmark builds a bookmark resource

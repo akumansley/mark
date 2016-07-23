@@ -9,7 +9,6 @@ import (
 // Debug prints the feed
 type Debug struct {
 	db  *app.DB
-	u *app.User
 }
 
 // NewDebug builds a debug

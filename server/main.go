@@ -35,13 +35,10 @@ func New(db *app.DB) http.Handler {
 	r := mux.NewRouter()
 
 	apiRouter := r.PathPrefix("/api").Subrouter()
-
 	s := api.NewStream(db)
 	apiRouter.HandleFunc("/stream", s.GetStream).Methods("GET")
-
 	b := api.NewBookmark(db)
 	apiRouter.HandleFunc("/bookmark", b.AddBookmark).Methods("POST")
-
 	d := api.NewDebug(db)
 	apiRouter.HandleFunc("/debug", d.GetDebug).Methods("GET")
 
@@ -49,10 +46,8 @@ func New(db *app.DB) http.Handler {
 	viewsRouter.HandleFunc("/title", TitleHandler).Methods("GET")
 
 	syncRouter := r.PathPrefix("/sync").Subrouter()
-
 	syncRouter.HandleFunc("/pubs", TitleHandler).Methods("GET")
 	syncRouter.HandleFunc("/pubs", TitleHandler).Methods("POST")
-
 	syncRouter.HandleFunc("/heads", TitleHandler).Methods("GET")
 	syncRouter.HandleFunc("/feed/{id}", TitleHandler).Methods("GET")
 

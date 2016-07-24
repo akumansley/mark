@@ -127,6 +127,35 @@ func (db *DB) PutFeed(f *feed.Feed) error {
 	return nil
 }
 
+func (db *DB) GetPubs() ([]feed.Pub, error) {
+	var pubs []feed.Pub
+
+	pubK := NewKey("pub")
+	i, err := db.store.Prefix(pubK.ToBytes())
+	if err != nil {
+		return nil, err
+	}
+	for _, v, err := i.Next(); err == nil; _, v, err = i.Next() {
+		var pub feed.Pub
+		err = json.Unmarshal(v, &pub)
+		if err != nil {
+			return nil, err
+		}
+		pubs = append(pubs, pub)
+	}
+	return pubs, nil
+}
+
+func (db *DB) PutPub(p *feed.Pub) error {
+	bytes, err := json.Marshal(p)
+	if err != nil {
+		return err
+	}
+	k := NewKey("pub", string(p.URLHash()))
+	db.store.Set(k.ToBytes(), bytes)
+	return nil
+}
+
 func (db *DB) applyDatom(d Datom) {
 	// eav, aev, ave, vae
 	// we probably don't need all of these..

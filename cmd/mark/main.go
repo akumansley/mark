@@ -2,7 +2,6 @@ package main
 
 import (
 	"crypto/rsa"
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -19,16 +18,16 @@ import (
 const usage = `mark
 
 Usage:
-  mark init
-	mark serve`
+  mark init [-d <dir>]
+	mark serve [-d <dir>] [-p <port>]
 
-func initFeed() error {
-	markDir := os.Getenv("MARK_DIR")
+Options:
+	-d <dir>, --data-dir <dir>  Specify data directory [default: /var/opt/mark]
+	-p <port>, --port <port>		Specify port [default: 8080]
 
-	if markDir == "" {
-		return errors.New("Set the environment variable MARK_DIR")
-	}
+`
 
+func initFeed(markDir string) error {
 	err := os.MkdirAll(markDir, 0777)
 	if err != nil {
 		return err
@@ -58,12 +57,7 @@ func initFeed() error {
 	return db.PutFeed(feed)
 }
 
-func openDbAndKeys() (*rsa.PrivateKey, *entities.DB, error) {
-	markDir := os.Getenv("MARK_DIR")
-	if markDir == "" {
-		return nil, nil, errors.New("Set the environment variable MARK_DIR")
-	}
-
+func openDbAndKeys(markDir string) (*rsa.PrivateKey, *entities.DB, error) {
 	key, err := feed.OpenKeys(markDir)
 	if err != nil {
 		return nil, nil, err
@@ -84,7 +78,7 @@ func openDbAndKeys() (*rsa.PrivateKey, *entities.DB, error) {
 	return key, db, nil
 }
 
-func serve(db *entities.DB, key *rsa.PrivateKey) error {
+func serve(db *entities.DB, key *rsa.PrivateKey, dir, port string) error {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	go func() {
@@ -96,27 +90,29 @@ func serve(db *entities.DB, key *rsa.PrivateKey) error {
 	appDB := app.NewDB(db, key)
 
 	s := server.New(appDB)
-	fmt.Printf("Now serving on :8081\n")
-	return http.ListenAndServe(":8081", s)
+	fmt.Printf("Now serving on :%s\n", port)
+	return http.ListenAndServe(":"+port, s)
 }
 
 func main() {
 	args, _ := docopt.Parse(usage, nil, true, "Mark 0", false)
+	dir := args["--data-dir"].(string)
 
 	if args["init"].(bool) {
-		err := initFeed()
+		err := initFeed(dir)
 		if err != nil {
 			log.Fatal(err)
 		}
 		os.Exit(0)
 	} else {
-		key, db, err := openDbAndKeys() // maybe wrap this in a Session
+		key, db, err := openDbAndKeys(dir) // maybe wrap this in a Session
 		if err != nil {
 			log.Fatal(err)
 		}
 		defer db.Close()
 		if args["serve"].(bool) {
-			err = serve(db, key)
+			port := args["--port"].(string)
+			err = serve(db, key, dir, port)
 			if err != nil {
 				log.Fatal(err)
 			}

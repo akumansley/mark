@@ -9,20 +9,24 @@
       margin:0;
       box-sizing: border-box;
     }
-    .enter-enter {
+    .fade-enter {
       opacity: 0.01;
     }
-    .enter-appear {
+    .fade-appear {
       opacity: 0.01;
     }
-    .enter-appear.enter-appear-active {
-      opacity: 1;
-      transition: opacity .5s ease-in;
+    .fade-leave {
+      opacity: 0;
     }
-    .enter-enter.enter-enter-active {
+    .fade-appear.fade-appear-active {
       opacity: 1;
-      transition: opacity .5s ease-in;
+      transition: opacity .1s ease-in;
     }
+    .fade-enter.fade-enter-active {
+      opacity: 1;
+      transition: opacity .1s ease-in;
+    }
+
     .underline-if-active {
       background-size: 25% 2px;
     }

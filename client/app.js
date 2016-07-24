@@ -4,6 +4,8 @@ import {Header} from './components/header/header';
 import Radium from 'radium';
 import {StyleRoot} from 'radium';
 import Colors from './colors';
+import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
+
 
 var baseStyle = {
   color: Colors.primaryText,
@@ -26,8 +28,19 @@ var baseStyle = {
 export function App(props) {
     return (
         <StyleRoot style={baseStyle}>
-            <Header/>
-            {props.children}
+          <Header/>
+          <ReactCSSTransitionGroup
+              component="div"
+              transitionName="fade"
+              transitionAppear={true}
+              transitionEnter={true}
+              transitionAppearTimeout={200}
+              transitionEnterTimeout={200}
+              transitionLeaveTimeout={200}>
+              {React.cloneElement(props.children, {
+                key: location.pathname
+              })}
+          </ReactCSSTransitionGroup>
         </StyleRoot>
     );
 }

@@ -74,7 +74,14 @@ function Component(props) {
     return (
         <div style={inputWrapper}>
             <input key="url" value={props.url} style={input} placeholder="Add.." onKeyDown={onSubmit} onChange={onChange} type="text"></input>
-            <ReactCSSTransitionGroup transitionName="enter" style={flexCol} transitionAppear={true} transitionEnter={true} transitionAppearTimeout={200} transitionEnterTimeout={200} transitionLeaveTimeout={1}>
+            <ReactCSSTransitionGroup
+              transitionName="fade"
+              style={flexCol}
+              transitionAppear={true}
+              transitionEnter={true}
+              transitionAppearTimeout={200}
+              transitionEnterTimeout={200} 
+              transitionLeaveTimeout={1}>
                 {title}
                 {addBtn}
             </ReactCSSTransitionGroup>

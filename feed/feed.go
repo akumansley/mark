@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"strings"
 
 	"github.com/square/go-jose"
 )
@@ -28,18 +29,72 @@ func (c *Coder) RegisterOp(name string, cf Converter) {
 	c.registry[name] = cf
 }
 
-// Encode turns a feed into bytes
-func (c *Coder) Encode(f *Feed) ([]byte, error) {
-	return json.Marshal(f)
+// Encode turns a feed into a signed feed; can only do this if you have the key to sign it
+func (c *Coder) Encode(f *Feed, key *rsa.PrivateKey) (SignedFeed, error) {
+	signer, err := jose.NewSigner(jose.RS256, key)
+	if err != nil {
+		return nil, err
+	}
+	var sf SignedFeed
+
+	for _, op := range f.Ops {
+		payload, err := op.MarshalJSON()
+		if err != nil {
+			return nil, err
+		}
+		jws, err := signer.Sign(payload)
+		if err != nil {
+			return nil, err
+		}
+		s, err := jws.CompactSerialize()
+		if err != nil {
+			return nil, err
+		}
+		sf = append(sf, s)
+	}
+	return sf, nil
 }
 
-// Decode turns bytes into a feed
-func (c *Coder) Decode(bytes []byte) (*Feed, error) {
-	var f Feed
+// Url-safe base64 encode that strips padding
+// Copied from square jose
+func base64URLEncode(data []byte) string {
+	var result = base64.URLEncoding.EncodeToString(data)
+	return strings.TrimRight(result, "=")
+}
 
-	json.Unmarshal(bytes, &f)
-	for i := range f.Ops {
-		f.Ops[i].DecodeBody(c.registry)
+// Url-safe base64 decoder that adds padding
+// Copied from square jose
+func base64URLDecode(data string) ([]byte, error) {
+	var missing = (4 - len(data)%4) % 4
+	data += strings.Repeat("=", missing)
+	return base64.URLEncoding.DecodeString(data)
+}
+
+// Decode turns a SignedFeed into a feed, verifying it along the way
+func (c *Coder) Decode(sf SignedFeed) (*Feed, error) {
+	// this might not always be in [0], but for now..
+	key, err := sf.CurrentKey()
+	if err != nil {
+		return nil, err
+	}
+
+	var f Feed
+	for _, s := range sf {
+		opJws, err := jose.ParseSigned(s)
+		if err != nil {
+			return nil, err
+		}
+		opBytes, err := opJws.Verify(key)
+		if err != nil {
+			return nil, err
+		}
+		var op Op
+		err = json.Unmarshal(opBytes, &op)
+		if err != nil {
+			return nil, err
+		}
+		op.DecodeBody(c.registry)
+		f.Ops = append(f.Ops, op)
 	}
 
 	return &f, nil
@@ -87,6 +142,37 @@ type Feed struct {
 	Ops []Op
 }
 
+// SignedFeed is a feed in compact JWS serialization format
+type SignedFeed []string
+
+// CurrentKey returns the first declared key
+func (sf SignedFeed) CurrentKey() (*jose.JsonWebKey, error) {
+	dkJWS := sf[0]
+	parts := strings.Split(dkJWS, ".")
+	dkPayload := parts[1]
+	dkBytes, err := base64URLDecode(dkPayload)
+	if err != nil {
+		return nil, err
+	}
+	var dkOp Op
+	err = json.Unmarshal(dkBytes, &dkOp)
+	if err != nil {
+		return nil, err
+	}
+	var jwk jose.JsonWebKey
+	err = json.Unmarshal(dkOp.RawBody, &jwk)
+	return &jwk, err
+}
+
+// Fingerprint returns a fingerprint of a pub key
+func (sf SignedFeed) Fingerprint() ([]byte, error) {
+	jwk, err := sf.CurrentKey()
+	if err != nil {
+		return nil, err
+	}
+	return fingerprint(jwk)
+}
+
 // DeclareKey returns an Op that sets the key for a feed
 func DeclareKey(key *rsa.PublicKey) (*Op, error) {
 	jwk, err := AsJWK(key)
@@ -109,48 +195,6 @@ func New(key *rsa.PrivateKey) (*Feed, error) {
 	return &feed, nil
 }
 
-// FromBytes inflates a Feed object from binary
-func FromBytes(bytes []byte) (*Feed, error) {
-	var feed Feed
-	if len(bytes) == 0 {
-		return nil, errors.New("bytes is empty")
-	}
-	err := json.Unmarshal(bytes, &feed)
-	if err != nil {
-		return nil, err
-	}
-
-	// TODO - verify feed
-	return &feed, nil
-}
-
-// ToBytes serializes a feed
-func (feed *Feed) ToBytes(key *rsa.PrivateKey) ([]byte, error) {
-	signer, err := jose.NewSigner(jose.RS256, key)
-	if err != nil {
-		return nil, err
-	}
-	var bytesList [][]byte
-
-	for _, op := range feed.Ops {
-		payload, err := json.Marshal(op)
-		if err != nil {
-			return nil, err
-		}
-		jws, err := signer.Sign(payload)
-		if err != nil {
-			return nil, err
-		}
-		s, err := jws.CompactSerialize()
-		if err != nil {
-			return nil, err
-		}
-		bytes := []byte(s)
-		bytesList = append(bytesList, bytes)
-	}
-	return json.Marshal(bytesList)
-}
-
 // Append adds an Op to the end of a feed
 func (feed *Feed) Append(op Op) error {
 	// op.FeedHash = feed.FeedHash()
@@ -169,12 +213,6 @@ func (feed *Feed) CurrentKey() (*jose.JsonWebKey, error) {
 				jwk := op.Body.(*jose.JsonWebKey)
 				return jwk, nil
 			}
-			var jwk jose.JsonWebKey
-			err := json.Unmarshal(op.RawBody, &jwk)
-			if err != nil {
-				return nil, err
-			}
-			return &jwk, nil
 		}
 	}
 	return nil, errors.New("Feed had no declared key")

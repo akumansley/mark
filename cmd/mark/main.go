@@ -55,8 +55,8 @@ func initFeed(markDir string) error {
 	if err != nil {
 		return err
 	}
-	db := entities.NewDB(store, fp)
-	return db.PutFeed(feed)
+	db := entities.NewDB(store, fp, key)
+	return db.PutUserFeed(feed)
 }
 
 func openDbAndKeys(markDir string) (*rsa.PrivateKey, *entities.DB, error) {
@@ -74,7 +74,7 @@ func openDbAndKeys(markDir string) (*rsa.PrivateKey, *entities.DB, error) {
 		return nil, nil, err
 	}
 
-	db := entities.NewDB(store, fp)
+	db := entities.NewDB(store, fp, key)
 	db.RebuildIndexes()
 
 	return key, db, nil
@@ -83,12 +83,11 @@ func openDbAndKeys(markDir string) (*rsa.PrivateKey, *entities.DB, error) {
 func sync(db *entities.DB, url string) error {
 	p := feed.Pub{URL: url, LastUpdated: time.Now().Unix(), LastChecked: 0}
 	pubs := []feed.Pub{p}
-	f, err := db.UserFeed()
+	sfs, err := db.GetFeeds()
 	if err != nil {
 		return err
 	}
-	feeds := []feed.Feed{*f}
-	newPubs, newFeeds, err := feed.Sync(pubs, feeds)
+	newPubs, newFeeds, err := feed.Sync(pubs, sfs)
 	fmt.Printf("%s\n", newPubs)
 	fmt.Printf("%s\n", newFeeds)
 	fmt.Printf("%s\n", err)
@@ -104,7 +103,7 @@ func serve(db *entities.DB, key *rsa.PrivateKey, port string) error {
 		os.Exit(0)
 	}()
 
-	appDB := app.NewDB(db, key)
+	appDB := app.NewDB(db)
 
 	s := server.New(appDB)
 	fmt.Printf("Now serving on :%s\n", port)

@@ -26,7 +26,7 @@ func (f *FeedResource) GetFeed(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	bytes, err := json.Marshal(heads)
+	bytes, err := json.Marshal(feed)
 	if err != nil {
 		panic(err)
 	}

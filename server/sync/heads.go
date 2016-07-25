@@ -2,7 +2,6 @@ package sync
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/awans/mark/app"
@@ -22,7 +21,6 @@ func NewHeadsResource(db *app.DB) *HeadsResource {
 // GetHeads returns head of each feed
 func (h *HeadsResource) GetHeads(w http.ResponseWriter, r *http.Request) {
 	feeds, err := h.db.GetFeeds()
-	fmt.Printf("%s\n", feeds)
 	if err != nil {
 		panic(err)
 	}
@@ -33,9 +31,8 @@ func (h *HeadsResource) GetHeads(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			panic(err)
 		}
-		heads = append(heads, feed.Head{ID: string(fp), Len: f.Len()})
+		heads = append(heads, feed.Head{ID: string(fp), Len: len(f)})
 	}
-	fmt.Printf("%s\n", heads)
 
 	bytes, err := json.Marshal(heads)
 	if err != nil {

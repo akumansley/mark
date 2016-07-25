@@ -65,7 +65,7 @@ func (p *Pub) GetPubs() ([]Pub, error) {
 	return pubs, err
 }
 
-func (p *Pub) GetFeed(feedID string) (*Feed, error) {
+func (p *Pub) GetFeed(feedID string) (*SignedFeed, error) {
 	u, err := url.Parse(p.URL)
 	u.Path = path.Join(u.Path, ProtocolRoot, FeedPath, feedID)
 	s := u.String()
@@ -75,9 +75,8 @@ func (p *Pub) GetFeed(feedID string) (*Feed, error) {
 		return nil, err
 	}
 	defer r.Body.Close()
-	var feed Feed
+	var sf SignedFeed
 
-	// TODO this ain't gonna work
-	err = json.NewDecoder(r.Body).Decode(&feed)
-	return &feed, err
+	err = json.NewDecoder(r.Body).Decode(&sf)
+	return &sf, err
 }

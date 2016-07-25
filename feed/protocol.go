@@ -18,8 +18,8 @@ type pubLen struct {
 // Sync gets any new updates from the list of pubs.
 // It works incrementally on top of the feeds passed in
 // so pass in all known feeds and pubs
-func Sync(pubs []Pub, feeds []Feed) ([]Pub, []Feed, error) {
-	feedsById := make(map[string]Feed)
+func Sync(pubs []Pub, feeds []SignedFeed) ([]Pub, []SignedFeed, error) {
+	feedsById := make(map[string]SignedFeed)
 
 	for _, feed := range feeds {
 		fp, err := feed.Fingerprint()
@@ -60,7 +60,7 @@ func Sync(pubs []Pub, feeds []Feed) ([]Pub, []Feed, error) {
 						return nil, nil, err
 					}
 					// best so far
-					best := f.Len()
+					best := len(f)
 					if pl, ok := feedPubs[string(fp)]; ok {
 						best = pl.Len
 					}
@@ -77,7 +77,7 @@ func Sync(pubs []Pub, feeds []Feed) ([]Pub, []Feed, error) {
 	}
 
 	// now we know where the latest feeds are, so let's get 'em
-	var outFeeds []Feed
+	var outFeeds []SignedFeed
 	for fp, pl := range feedPubs {
 		pub := pl.Pub
 		feed, err := pub.GetFeed(fp)

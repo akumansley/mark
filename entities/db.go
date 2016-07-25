@@ -2,6 +2,7 @@ package entities
 
 import (
 	"bytes"
+	"crypto/rsa"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -16,6 +17,7 @@ type DB struct {
 	store Store
 	fp    []byte
 	c     *feed.Coder
+	key   *rsa.PrivateKey // maybe hide this
 }
 
 func (db *DB) NewQuery(kind string) *Query {
@@ -37,12 +39,12 @@ func ConvertJWK(bytes []byte) (interface{}, error) {
 }
 
 // NewDB is a constructor for a db
-func NewDB(store Store, fp []byte) *DB {
+func NewDB(store Store, fp []byte, key *rsa.PrivateKey) *DB {
 	c := feed.NewCoder()
 	c.RegisterOp("eav", ConvertDatoms)
 	c.RegisterOp("declare-key", ConvertJWK)
 
-	return &DB{store: store, fp: fp, c: c}
+	return &DB{store: store, fp: fp, c: c, key: key}
 }
 
 // Close closes the db
@@ -51,6 +53,7 @@ func (db *DB) Close() {
 }
 
 // RebuildIndexes deletes all keys in the eav indexes and then loads each feed
+// TODO rewrite this using GetFeeds
 func (db *DB) RebuildIndexes() error {
 	for _, index := range []string{"eav", "aev", "ave", "vae"} {
 		p, err := db.store.Prefix(NewKey(index).ToBytes())
@@ -61,12 +64,17 @@ func (db *DB) RebuildIndexes() error {
 			db.store.Delete(k)
 		}
 	}
-	fi, err := db.store.Prefix(NewKey("user").ToBytes())
+	fi, err := db.store.Prefix(NewKey("feed").ToBytes())
 	if err != nil {
 		return err
 	}
 	for _, v, err := fi.Next(); err == nil; _, v, err = fi.Next() {
-		feed, err := db.c.Decode(v)
+		var sf feed.SignedFeed
+		err = json.Unmarshal(v, &sf)
+		if err != nil {
+			return err
+		}
+		feed, err := db.c.Decode(sf)
 		if err != nil {
 			return err
 		}
@@ -102,8 +110,8 @@ func (db *DB) applyOp(op feed.Op, fp []byte) {
 	}
 }
 
-func (db *DB) GetFeeds() ([]feed.Feed, error) {
-	var feeds []feed.Feed
+func (db *DB) GetFeeds() ([]feed.SignedFeed, error) {
+	var feeds []feed.SignedFeed
 
 	feedK := NewKey("feed")
 	i, err := db.store.Prefix(feedK.ToBytes())
@@ -111,36 +119,56 @@ func (db *DB) GetFeeds() ([]feed.Feed, error) {
 		return nil, err
 	}
 	for _, v, err := i.Next(); err == nil; _, v, err = i.Next() {
-		f, err := db.c.Decode(v)
+		var sf feed.SignedFeed
+		err = json.Unmarshal(v, &sf)
 		if err != nil {
 			return nil, err
 		}
-		feeds = append(feeds, *f)
+		feeds = append(feeds, sf)
 	}
 	return feeds, nil
 }
 
-func (db *DB) GetFeed(id string) ([]feed.Feed, error) {
-	feedK := NewKey("feed", id)
+func (db *DB) GetFeed(id string) (feed.SignedFeed, error) {
+	feedK := NewKey("feed", string(db.fp))
 	feedBytes, err := db.store.Get(feedK.ToBytes())
 	if err != nil {
 		return nil, err
 	}
-	return db.c.Decode(feedBytes)
+	var sf feed.SignedFeed
+	err = json.Unmarshal(feedBytes, &sf)
+	if err != nil {
+		return nil, err
+	}
+	return sf, nil
 }
 
 // UserFeed loads the feed for the user in this session
 func (db *DB) UserFeed() (*feed.Feed, error) {
-	return db.GetFeed(string(db.fp))
+	feedK := NewKey("feed", string(db.fp))
+	feedBytes, err := db.store.Get(feedK.ToBytes())
+	if err != nil {
+		return nil, err
+	}
+	var sf feed.SignedFeed
+	err = json.Unmarshal(feedBytes, &sf)
+	if err != nil {
+		return nil, err
+	}
+	return db.c.Decode(sf)
 }
 
-// PutFeed sets a feed in the db
-func (db *DB) PutFeed(f *feed.Feed) error {
+// PutUserFeed sets a user's feed in the db
+func (db *DB) PutUserFeed(f *feed.Feed) error {
 	fp, err := f.Fingerprint()
 	if err != nil {
 		return err
 	}
-	feedBytes, err := db.c.Encode(f)
+	sf, err := db.c.Encode(f, db.key)
+	if err != nil {
+		return err
+	}
+	feedBytes, err := json.Marshal(sf)
 	if err != nil {
 		return err
 	}
@@ -328,7 +356,7 @@ func (db *DB) Put(id string, src interface{}) error {
 	op := eavOp(datoms)
 	feed.Append(op)
 
-	err = db.PutFeed(feed)
+	err = db.PutUserFeed(feed)
 	if err != nil {
 		return err
 	}
@@ -347,6 +375,6 @@ func (db *DB) Add(src interface{}) (id string, err error) {
 		return "", err
 	}
 	id = u.String()
-	db.Put(id, src)
-	return id, nil
+	err = db.Put(id, src)
+	return id, err
 }

@@ -1,21 +1,18 @@
 package app
 
 import (
-	"crypto/rsa"
-
 	"github.com/awans/mark/entities"
 	"github.com/awans/mark/feed"
 )
 
 // DB is the application-level DB interface
 type DB struct {
-	key *rsa.PrivateKey // still maybe hide this in a Session
-	e   *entities.DB
+	e *entities.DB
 }
 
 // NewDB makes a new app db from an entity db
-func NewDB(e *entities.DB, key *rsa.PrivateKey) *DB {
-	return &DB{e: e, key: key}
+func NewDB(e *entities.DB) *DB {
+	return &DB{e: e}
 }
 
 // Close closes the underlying db
@@ -23,36 +20,28 @@ func (db *DB) Close() {
 	db.e.Close()
 }
 
-// GetFeed returns a user's feed
-func (db *DB) GetFeed() ([]Bookmark, error) {
+// GetStream returns a user's stream
+func (db *DB) GetStream() ([]Bookmark, error) {
 	var bookmarks []Bookmark
 	db.e.GetAll(&bookmarks)
 	return bookmarks, nil
 }
 
 // AddBookmark inserts a bookmark into the db
-func (db *DB) AddBookmark(b *Bookmark) {
-	id, _ := db.e.Add(b)
+func (db *DB) AddBookmark(b *Bookmark) error {
+	id, err := db.e.Add(b)
 	b.ID = id
-}
-
-// DebugFeed returns the user's feed
-func (db *DB) DebugFeed() ([]byte, error) {
-	feed, err := db.e.UserFeed()
-	if err != nil {
-		return nil, err
-	}
-	return feed.ToBytes(db.key)
+	return err
 }
 
 func (db *DB) GetPubs() ([]feed.Pub, error) {
 	return db.e.GetPubs()
 }
 
-func (db *DB) GetFeeds() ([]feed.Feed, error) {
+func (db *DB) GetFeeds() ([]feed.SignedFeed, error) {
 	return db.e.GetFeeds()
 }
 
-func (db *DB) GetFeed(id string) (*feed.Feed, error) {
+func (db *DB) GetFeed(id string) (feed.SignedFeed, error) {
 	return db.e.GetFeed(id)
 }

@@ -19,7 +19,7 @@ func NewStream(db *app.DB) *Stream {
 
 // GetFeed returns the current user's stream
 func (s *Stream) GetStream(w http.ResponseWriter, r *http.Request) {
-	bookmarks, err := s.db.GetFeed()
+	bookmarks, err := s.db.GetStream()
 	if err != nil {
 		panic(err)
 	}

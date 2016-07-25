@@ -51,8 +51,8 @@ func New(db *app.DB) http.Handler {
 	syncRouter.HandleFunc("/pubs", p.GetPubs).Methods("GET")
 	h := sync.NewHeadsResource(db)
 	syncRouter.HandleFunc("/heads", h.GetHeads).Methods("GET")
-
-	syncRouter.HandleFunc("/feed/{id}", TitleHandler).Methods("GET")
+	f := sync.NewFeedResource(db)
+	syncRouter.HandleFunc("/feed/{id}", f.GetFeed).Methods("GET")
 	syncRouter.HandleFunc("/announce", TitleHandler).Methods("POST")
 
 	r.Handle("/bundle.js", http.FileServer(http.Dir("server/data/static/build")))

@@ -48,3 +48,11 @@ func (db *DB) DebugFeed() ([]byte, error) {
 func (db *DB) GetPubs() ([]feed.Pub, error) {
 	return db.e.GetPubs()
 }
+
+func (db *DB) GetFeeds() ([]feed.Feed, error) {
+	return db.e.GetFeeds()
+}
+
+func (db *DB) GetFeed(id string) (*feed.Feed, error) {
+	return db.e.GetFeed(id)
+}

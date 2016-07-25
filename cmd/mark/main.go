@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"time"
 
 	"github.com/awans/mark/app"
 	"github.com/awans/mark/entities"
@@ -20,6 +21,7 @@ const usage = `mark
 Usage:
   mark init [-d <dir>]
 	mark serve [-d <dir>] [-p <port>]
+	mark sync [-d <dir>] <url>
 
 Options:
 	-d <dir>, --data-dir <dir>  Specify data directory [default: /var/opt/mark]
@@ -78,7 +80,22 @@ func openDbAndKeys(markDir string) (*rsa.PrivateKey, *entities.DB, error) {
 	return key, db, nil
 }
 
-func serve(db *entities.DB, key *rsa.PrivateKey, dir, port string) error {
+func sync(db *entities.DB, url string) error {
+	p := feed.Pub{URL: url, LastUpdated: time.Now().Unix(), LastChecked: 0}
+	pubs := []feed.Pub{p}
+	f, err := db.UserFeed()
+	if err != nil {
+		return err
+	}
+	feeds := []feed.Feed{*f}
+	newPubs, newFeeds, err := feed.Sync(pubs, feeds)
+	fmt.Printf("%s\n", newPubs)
+	fmt.Printf("%s\n", newFeeds)
+	fmt.Printf("%s\n", err)
+	return err
+}
+
+func serve(db *entities.DB, key *rsa.PrivateKey, port string) error {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	go func() {
@@ -110,9 +127,17 @@ func main() {
 			log.Fatal(err)
 		}
 		defer db.Close()
+		if args["sync"].(bool) {
+			url := args["<url>"].(string)
+			err = sync(db, url)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+		}
 		if args["serve"].(bool) {
 			port := args["--port"].(string)
-			err = serve(db, key, dir, port)
+			err = serve(db, key, port)
 			if err != nil {
 				log.Fatal(err)
 			}

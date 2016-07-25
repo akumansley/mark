@@ -3,8 +3,8 @@ package feed
 import (
 	"crypto"
 	"crypto/rsa"
-	"encoding/json"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 
 	"github.com/square/go-jose"
@@ -113,7 +113,6 @@ func New(key *rsa.PrivateKey) (*Feed, error) {
 func FromBytes(bytes []byte) (*Feed, error) {
 	var feed Feed
 	if len(bytes) == 0 {
-
 		return nil, errors.New("bytes is empty")
 	}
 	err := json.Unmarshal(bytes, &feed)
@@ -179,6 +178,10 @@ func (feed *Feed) CurrentKey() (*jose.JsonWebKey, error) {
 		}
 	}
 	return nil, errors.New("Feed had no declared key")
+}
+
+func (feed *Feed) Len() int {
+	return len(feed.Ops)
 }
 
 func fingerprint(jwk *jose.JsonWebKey) ([]byte, error) {

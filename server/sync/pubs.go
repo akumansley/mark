@@ -1,6 +1,7 @@
-package api
+package sync
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/awans/mark/app"
@@ -12,14 +13,18 @@ type PubsResource struct {
 	db *app.DB
 }
 
-// NewDebug builds a debug
-func NewPubsResource(db *app.DB) *Pub {
+// NewPubsResource builds a debug
+func NewPubsResource(db *app.DB) *PubsResource {
 	return &PubsResource{db: db}
 }
 
-// GetDebug returns the current user's feed
+// GetPubs returns the current user's feed
 func (p *PubsResource) GetPubs(w http.ResponseWriter, r *http.Request) {
-	pubs, err := d.db.GetPubs()
+	pubs, err := p.db.GetPubs()
+	if err != nil {
+		panic(err)
+	}
+	bytes, err := json.Marshal(pubs)
 	if err != nil {
 		panic(err)
 	}

@@ -102,14 +102,36 @@ func (db *DB) applyOp(op feed.Op, fp []byte) {
 	}
 }
 
-// UserFeed loads the feed for the user in this session
-func (db *DB) UserFeed() (*feed.Feed, error) {
-	feedK := Key{path: [][]byte{[]byte("user"), db.fp, []byte("feed")}}
+func (db *DB) GetFeeds() ([]feed.Feed, error) {
+	var feeds []feed.Feed
+
+	feedK := NewKey("feed")
+	i, err := db.store.Prefix(feedK.ToBytes())
+	if err != nil {
+		return nil, err
+	}
+	for _, v, err := i.Next(); err == nil; _, v, err = i.Next() {
+		f, err := db.c.Decode(v)
+		if err != nil {
+			return nil, err
+		}
+		feeds = append(feeds, *f)
+	}
+	return feeds, nil
+}
+
+func (db *DB) GetFeed(id string) ([]feed.Feed, error) {
+	feedK := NewKey("feed", id)
 	feedBytes, err := db.store.Get(feedK.ToBytes())
 	if err != nil {
 		return nil, err
 	}
 	return db.c.Decode(feedBytes)
+}
+
+// UserFeed loads the feed for the user in this session
+func (db *DB) UserFeed() (*feed.Feed, error) {
+	return db.GetFeed(string(db.fp))
 }
 
 // PutFeed sets a feed in the db
@@ -122,7 +144,7 @@ func (db *DB) PutFeed(f *feed.Feed) error {
 	if err != nil {
 		return err
 	}
-	feedK := Key{path: [][]byte{[]byte("user"), fp, []byte("feed")}}
+	feedK := Key{path: [][]byte{[]byte("feed"), fp}}
 	db.store.Set(feedK.ToBytes(), feedBytes)
 	return nil
 }

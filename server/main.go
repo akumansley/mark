@@ -7,6 +7,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"github.com/awans/mark/app"
 	"github.com/awans/mark/server/api"
+	"github.com/awans/mark/server/sync"
 	"github.com/gorilla/mux"
 	"github.com/kennygrant/sanitize"
 )
@@ -46,10 +47,13 @@ func New(db *app.DB) http.Handler {
 	viewsRouter.HandleFunc("/title", TitleHandler).Methods("GET")
 
 	syncRouter := r.PathPrefix("/sync").Subrouter()
-	syncRouter.HandleFunc("/pubs", TitleHandler).Methods("GET")
-	syncRouter.HandleFunc("/pubs", TitleHandler).Methods("POST")
-	syncRouter.HandleFunc("/heads", TitleHandler).Methods("GET")
+	p := sync.NewPubsResource(db)
+	syncRouter.HandleFunc("/pubs", p.GetPubs).Methods("GET")
+	h := sync.NewHeadsResource(db)
+	syncRouter.HandleFunc("/heads", h.GetHeads).Methods("GET")
+
 	syncRouter.HandleFunc("/feed/{id}", TitleHandler).Methods("GET")
+	syncRouter.HandleFunc("/announce", TitleHandler).Methods("POST")
 
 	r.Handle("/bundle.js", http.FileServer(http.Dir("server/data/static/build")))
 	r.HandleFunc("/{path:.*}", IndexHandler).Methods("GET")

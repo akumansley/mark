@@ -160,11 +160,16 @@ func (db *DB) UserFeed() (*feed.Feed, error) {
 
 // PutUserFeed sets a user's feed in the db
 func (db *DB) PutUserFeed(f *feed.Feed) error {
-	fp, err := f.Fingerprint()
+	sf, err := db.c.Encode(f, db.key)
 	if err != nil {
 		return err
 	}
-	sf, err := db.c.Encode(f, db.key)
+	return db.PutFeed(sf)
+}
+
+// PutFeed sets a feed in the store
+func (db *DB) PutFeed(sf feed.SignedFeed) error {
+	fp, err := sf.Fingerprint()
 	if err != nil {
 		return err
 	}

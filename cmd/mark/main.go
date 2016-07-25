@@ -88,6 +88,10 @@ func sync(db *entities.DB, url string) error {
 		return err
 	}
 	newPubs, newFeeds, err := feed.Sync(pubs, sfs)
+	for _, sf := range newFeeds {
+		db.PutFeed(sf)
+	}
+
 	fmt.Printf("%s\n", newPubs)
 	fmt.Printf("%s\n", newFeeds)
 	fmt.Printf("%s\n", err)

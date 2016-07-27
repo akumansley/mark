@@ -2,6 +2,7 @@ package feed
 
 import "log"
 
+// Protocol related paths
 const (
 	ProtocolRoot = "sync"
 	PubsPath     = "pubs"
@@ -19,18 +20,18 @@ type pubLen struct {
 // It works incrementally on top of the feeds passed in
 // so pass in all known feeds and pubs
 func Sync(pubs []Pub, feeds []SignedFeed) ([]Pub, []SignedFeed, error) {
-	feedsById := make(map[string]SignedFeed)
+	feedsByID := make(map[string]SignedFeed)
 
 	for _, feed := range feeds {
 		fp, err := feed.Fingerprint()
 		if err != nil {
 			return nil, nil, err
 		}
-		feedsById[string(fp)] = feed
+		feedsByID[string(fp)] = feed
 	}
 
 	feedPubs := make(map[string]pubLen)
-	pubsByUrl := make(map[string]Pub)
+	pubsByURL := make(map[string]Pub)
 
 	for _, pub := range pubs {
 		if pub.ShouldUpdate() {
@@ -41,7 +42,7 @@ func Sync(pubs []Pub, feeds []SignedFeed) ([]Pub, []SignedFeed, error) {
 			}
 
 			for _, pubToAdd := range pubsToAdd {
-				pubsByUrl[string(pubToAdd.URLHash())] = pubToAdd
+				pubsByURL[string(pubToAdd.URLHash())] = pubToAdd
 			}
 
 			// TODO set last_checked
@@ -54,7 +55,7 @@ func Sync(pubs []Pub, feeds []SignedFeed) ([]Pub, []SignedFeed, error) {
 
 			for _, head := range heads {
 				// do we have this feed at all
-				if f, ok := feedsById[head.ID]; ok {
+				if f, ok := feedsByID[head.ID]; ok {
 					fp, err := f.Fingerprint()
 					if err != nil {
 						return nil, nil, err
@@ -89,7 +90,7 @@ func Sync(pubs []Pub, feeds []SignedFeed) ([]Pub, []SignedFeed, error) {
 	}
 
 	var outPubs []Pub
-	for _, p := range pubsByUrl {
+	for _, p := range pubsByURL {
 		outPubs = append(outPubs, p)
 	}
 
@@ -97,6 +98,16 @@ func Sync(pubs []Pub, feeds []SignedFeed) ([]Pub, []SignedFeed, error) {
 }
 
 // Announce tells your known pubs about some update to a feed
-func Announce(pubs []Pub, feed Feed) error {
+func Announce(self *Pub, pubs []Pub, f SignedFeed) error {
+	fp, err := f.Fingerprint()
+	if err != nil {
+		panic(err)
+	}
+	head := Head{ID: string(fp), Len: len(f)}
+
+	a := Announcement{Pub: *self, Heads: []Head{head}}
+	for _, p := range pubs {
+		p.Announce(&a)
+	}
 	return nil
 }

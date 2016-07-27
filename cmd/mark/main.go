@@ -99,6 +99,7 @@ func sync(db *entities.DB, url string) error {
 }
 
 func serve(db *entities.DB, key *rsa.PrivateKey, port string) error {
+	// Catch ctrl-c and gracefully exit
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	go func() {
@@ -109,7 +110,7 @@ func serve(db *entities.DB, key *rsa.PrivateKey, port string) error {
 
 	appDB := app.NewDB(db)
 
-	app.Sync("10s", db) // sync every 5m
+	app.Sync("10s", db)
 
 	s := server.New(appDB)
 	fmt.Printf("Now serving on :%s\n", port)

@@ -109,6 +109,8 @@ func serve(db *entities.DB, key *rsa.PrivateKey, port string) error {
 
 	appDB := app.NewDB(db)
 
+	app.Sync("10s", db) // sync every 5m
+
 	s := server.New(appDB)
 	fmt.Printf("Now serving on :%s\n", port)
 	return http.ListenAndServe(":"+port, s)

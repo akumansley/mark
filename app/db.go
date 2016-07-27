@@ -38,10 +38,18 @@ func (db *DB) GetPubs() ([]feed.Pub, error) {
 	return db.e.GetPubs()
 }
 
+func (db *DB) PutPub(p *feed.Pub) error {
+	return db.e.PutPub(p)
+}
+
 func (db *DB) GetFeeds() ([]feed.SignedFeed, error) {
 	return db.e.GetFeeds()
 }
 
 func (db *DB) GetFeed(id string) (feed.SignedFeed, error) {
 	return db.e.GetFeed(id)
+}
+
+func (db *DB) PutFeed(f feed.SignedFeed) error {
+	return db.e.PutFeed(f)
 }

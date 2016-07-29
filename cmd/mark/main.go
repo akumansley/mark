@@ -16,12 +16,13 @@ import (
 	"github.com/docopt/docopt-go"
 )
 
+const bootstrapURL = "http://04cdfbcc.ngrok.io"
+
 const usage = `mark
 
 Usage:
   mark init [-d <dir>]
-	mark serve [-d <dir>] [-p <port>]
-	mark sync [-d <dir>] <url>
+	mark serve [-d <dir>] [-p <port>] <url>
 
 Options:
 	-d <dir>, --data-dir <dir>  Specify data directory [default: /var/opt/mark]
@@ -56,7 +57,8 @@ func initFeed(markDir string) error {
 		return err
 	}
 	db := entities.NewDB(store, fp, key)
-	return db.PutUserFeed(feed)
+	_, err = db.PutUserFeed(feed)
+	return err
 }
 
 func openDbAndKeys(markDir string) (*rsa.PrivateKey, *entities.DB, error) {
@@ -80,25 +82,13 @@ func openDbAndKeys(markDir string) (*rsa.PrivateKey, *entities.DB, error) {
 	return key, db, nil
 }
 
-func sync(db *entities.DB, url string) error {
-	p := feed.Pub{URL: url, LastUpdated: time.Now().Unix(), LastChecked: 0}
-	pubs := []feed.Pub{p}
-	sfs, err := db.GetFeeds()
-	if err != nil {
-		return err
-	}
-	newPubs, newFeeds, err := feed.Sync(pubs, sfs)
-	for _, sf := range newFeeds {
-		db.PutFeed(sf)
-	}
+func serve(db *entities.DB, key *rsa.PrivateKey, port, url string) error {
+	self := feed.Pub{URL: url, LastUpdated: time.Now().Unix(), LastChecked: 0}
+	bootstrap := feed.Pub{URL: bootstrapURL, LastUpdated: time.Now().Unix(), LastChecked: 0}
 
-	fmt.Printf("%s\n", newPubs)
-	fmt.Printf("%s\n", newFeeds)
-	fmt.Printf("%s\n", err)
-	return err
-}
+	db.PutSelf(&self)
+	db.PutPub(&bootstrap)
 
-func serve(db *entities.DB, key *rsa.PrivateKey, port string) error {
 	// Catch ctrl-c and gracefully exit
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
@@ -133,17 +123,10 @@ func main() {
 			log.Fatal(err)
 		}
 		defer db.Close()
-		if args["sync"].(bool) {
-			url := args["<url>"].(string)
-			err = sync(db, url)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-		}
 		if args["serve"].(bool) {
+			url := args["<url>"].(string)
 			port := args["--port"].(string)
-			err = serve(db, key, port)
+			err = serve(db, key, port, url)
 			if err != nil {
 				log.Fatal(err)
 			}

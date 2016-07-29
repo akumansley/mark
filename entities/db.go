@@ -20,6 +20,7 @@ type DB struct {
 	key   *rsa.PrivateKey // maybe hide this
 }
 
+// NewQuery is not implemented yet
 func (db *DB) NewQuery(kind string) *Query {
 	return &Query{db: db, kind: kind}
 }
@@ -105,11 +106,12 @@ func (db *DB) applyOp(op feed.Op, fp []byte) {
 		db.applyDatom(datom)
 		entityIDs[datom.EntityID] = true
 	}
-	for entityID, _ := range entityIDs {
+	for entityID := range entityIDs {
 		db.ensureSysKeys(entityID, fp)
 	}
 }
 
+// GetFeeds returns all feed.SignedFeeds
 func (db *DB) GetFeeds() ([]feed.SignedFeed, error) {
 	var feeds []feed.SignedFeed
 
@@ -129,6 +131,7 @@ func (db *DB) GetFeeds() ([]feed.SignedFeed, error) {
 	return feeds, nil
 }
 
+// GetFeed returns a single SignedFeed by id
 func (db *DB) GetFeed(id string) (feed.SignedFeed, error) {
 	feedK := NewKey("feed", string(db.fp))
 	feedBytes, err := db.store.Get(feedK.ToBytes())
@@ -159,12 +162,12 @@ func (db *DB) UserFeed() (*feed.Feed, error) {
 }
 
 // PutUserFeed sets a user's feed in the db
-func (db *DB) PutUserFeed(f *feed.Feed) error {
+func (db *DB) PutUserFeed(f *feed.Feed) (feed.SignedFeed, error) {
 	sf, err := db.c.Encode(f, db.key)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return db.PutFeed(sf)
+	return sf, db.PutFeed(sf)
 }
 
 // PutFeed sets a feed in the store
@@ -179,9 +182,11 @@ func (db *DB) PutFeed(sf feed.SignedFeed) error {
 	}
 	feedK := Key{path: [][]byte{[]byte("feed"), fp}}
 	db.store.Set(feedK.ToBytes(), feedBytes)
+	db.RebuildIndexes() // TODO this is too much work
 	return nil
 }
 
+// GetPubs returns all Pubs this node knows about
 func (db *DB) GetPubs() ([]feed.Pub, error) {
 	var pubs []feed.Pub
 
@@ -201,6 +206,7 @@ func (db *DB) GetPubs() ([]feed.Pub, error) {
 	return pubs, nil
 }
 
+// PutPub adds a pub to the collection this node knows about
 func (db *DB) PutPub(p *feed.Pub) error {
 	bytes, err := json.Marshal(p)
 	if err != nil {
@@ -209,6 +215,29 @@ func (db *DB) PutPub(p *feed.Pub) error {
 	k := NewKey("pub", string(p.URLHash()))
 	db.store.Set(k.ToBytes(), bytes)
 	return nil
+}
+
+// PutSelf sets the Pub that is this node
+func (db *DB) PutSelf(p *feed.Pub) error {
+	k := NewKey("pub", "self")
+	bytes, err := json.Marshal(p)
+	if err != nil {
+		return err
+	}
+	db.store.Set(k.ToBytes(), bytes)
+	return nil
+}
+
+// GetSelf returns the Pub that is this node
+func (db *DB) GetSelf() (*feed.Pub, error) {
+	pubK := NewKey("pub", "self")
+	bytes, err := db.store.Get(pubK.ToBytes())
+	if err != nil {
+		return nil, err
+	}
+	var pub feed.Pub
+	err = json.Unmarshal(bytes, &pub)
+	return &pub, err
 }
 
 func (db *DB) applyDatom(d Datom) {
@@ -361,7 +390,7 @@ func (db *DB) Put(id string, src interface{}) error {
 	op := eavOp(datoms)
 	feed.Append(op)
 
-	err = db.PutUserFeed(feed)
+	sf, err := db.PutUserFeed(feed)
 	if err != nil {
 		return err
 	}
@@ -370,6 +399,7 @@ func (db *DB) Put(id string, src interface{}) error {
 		return err
 	}
 	db.applyOp(op, fp)
+	db.announce(sf)
 	return nil
 }
 
@@ -382,4 +412,17 @@ func (db *DB) Add(src interface{}) (id string, err error) {
 	id = u.String()
 	err = db.Put(id, src)
 	return id, err
+}
+
+func (db *DB) announce(f feed.SignedFeed) error {
+	self, err := db.GetSelf()
+	if err != nil {
+		return err
+	}
+	pubs, err := db.GetPubs()
+	if err != nil {
+		return err
+	}
+
+	return feed.Announce(self, pubs, f)
 }

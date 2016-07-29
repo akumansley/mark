@@ -19,6 +19,7 @@ type pubLen struct {
 // Sync gets any new updates from the list of pubs.
 // It works incrementally on top of the feeds passed in
 // so pass in all known feeds and pubs
+// TODO: only load the feed delta
 func Sync(pubs []Pub, feeds []SignedFeed) ([]Pub, []SignedFeed, error) {
 	feedsByID := make(map[string]SignedFeed)
 

@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"crypto/rsa"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"reflect"
+	"strconv"
 
 	"github.com/awans/mark/feed"
 	"github.com/nu7hatch/gouuid"
@@ -316,9 +318,20 @@ func (db *DB) Get(id string, dst interface{}) error {
 		// eav/123/user/name = Andrew
 		attr := string(components[3])
 		field := reflect.ValueOf(entity).Elem().FieldByName(attr)
-		sv := string(v)
 		if field.IsValid() {
-			field.Set(reflect.ValueOf(sv))
+			switch field.Kind() {
+			case reflect.Int:
+				i, err := strconv.Atoi(string(v))
+				if err != nil {
+					continue
+				}
+				field.SetInt(int64(i))
+			case reflect.String:
+				sv := string(v)
+				field.SetString(sv)
+			default:
+				return errors.New("Bad type")
+			}
 		}
 	}
 	reflect.ValueOf(dst).Elem().Set(reflect.ValueOf(entity).Elem())

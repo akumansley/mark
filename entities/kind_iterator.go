@@ -1,7 +1,5 @@
 package entities
 
-import "fmt"
-
 type kindIterator struct {
 	kind string
 	db   *DB
@@ -23,6 +21,5 @@ func (i *kindIterator) init() error {
 
 func (i *kindIterator) Next() (string, error) {
 	_, v, err := i.iter.Next()
-	fmt.Printf("kindIterator: %s %s \n", string(v), err)
 	return string(v), err
 }

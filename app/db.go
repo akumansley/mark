@@ -1,6 +1,8 @@
 package app
 
 import (
+	"time"
+
 	"github.com/awans/mark/entities"
 	"github.com/awans/mark/feed"
 )
@@ -23,13 +25,14 @@ func (db *DB) Close() {
 // GetStream returns a user's stream
 func (db *DB) GetStream() ([]Bookmark, error) {
 	var bookmarks []Bookmark
-	q := db.e.NewQuery("Bookmark").Order("-URL").Limit(10)
+	q := db.e.NewQuery("Bookmark").Order("-CreatedAt").Limit(10)
 	q.GetAll(&bookmarks)
 	return bookmarks, nil
 }
 
 // AddBookmark inserts a bookmark into the db
 func (db *DB) AddBookmark(b *Bookmark) error {
+	b.CreatedAt = int(time.Now().Unix())
 	id, err := db.e.Add(b)
 	b.ID = id
 	return err

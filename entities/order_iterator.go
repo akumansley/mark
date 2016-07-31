@@ -1,7 +1,6 @@
 package entities
 
 import (
-	"fmt"
 	"io"
 	"sort"
 )
@@ -32,7 +31,6 @@ func newOrderIterator(o *order, db *DB, inner queryIterator) *orderIterator {
 func (i *orderIterator) Next() (string, error) {
 	if i.returned == 0 {
 		// TODO errs
-		fmt.Printf("orderIterator: fill\n")
 		i.fill()
 		i.sort()
 	}
@@ -40,7 +38,6 @@ func (i *orderIterator) Next() (string, error) {
 		return "", io.EOF
 	}
 	i.returned++
-	fmt.Printf("orderIterator: returning %s \n", i.returned)
 	return i.workingSet[i.returned-1], nil
 }
 

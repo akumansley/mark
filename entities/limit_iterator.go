@@ -1,9 +1,6 @@
 package entities
 
-import (
-	"fmt"
-	"io"
-)
+import "io"
 
 type limitIterator struct {
 	limit    int
@@ -21,6 +18,5 @@ func (i *limitIterator) Next() (string, error) {
 		return "", io.EOF
 	}
 	i.returned++
-	fmt.Printf("limitIterator: %s \n", i.returned)
 	return i.inner.Next()
 }

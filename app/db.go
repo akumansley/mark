@@ -38,6 +38,39 @@ func (db *DB) AddBookmark(b *Bookmark) error {
 	return err
 }
 
+// GetProfile returns the current user's profile
+func (db *DB) GetProfile() (*Profile, error) {
+	feed, err := db.e.UserFeed()
+	if err != nil {
+		return nil, err
+	}
+
+	fp, err := feed.Fingerprint()
+	if err != nil {
+		return nil, err
+	}
+
+	var ps []Profile
+	db.e.NewQuery("Profile").Filter("FeedID =", string(fp)).GetAll(&ps)
+	var p *Profile
+	if len(ps) == 0 {
+		p = &Profile{}
+		db.e.Add(p)
+	} else {
+		p = &ps[0]
+	}
+	return p, nil
+}
+
+// SetProfile sets the current user's Profile
+func (db *DB) SetProfile(p *Profile) error {
+	old, err := db.GetProfile()
+	if err != nil {
+		return err
+	}
+	return db.e.Put(old.ID, p)
+}
+
 // GetPubs returns all pubs
 func (db *DB) GetPubs() ([]feed.Pub, error) {
 	return db.e.GetPubs()

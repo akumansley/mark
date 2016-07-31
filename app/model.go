@@ -10,8 +10,8 @@ type Bookmark struct {
 	Note      string `json:"note"`
 }
 
-// User represents a user in the marks system
-type User struct {
+// Profile represents a user in the marks system
+type Profile struct {
 	ID     string `json:"id"`
 	FeedID string `json:"feed_id"`
 	Name   string `json:"name"`

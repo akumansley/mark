@@ -38,7 +38,11 @@ type Query struct {
 func (q *Query) Filter(spec string, val interface{}) *Query {
 	parts := strings.Split(spec, " ")
 	attr, pred := parts[0], parts[1]
-	attr = q.kind + "/" + attr
+	if attr == "FeedID" || attr == "ID" {
+		attr = "db/" + attr
+	} else {
+		attr = q.kind + "/" + attr
+	}
 	q.filters = append(q.filters, filter{Attribute: attr, Predicate: pred, Value: val})
 	return q
 }

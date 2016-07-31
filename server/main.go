@@ -42,6 +42,8 @@ func New(db *app.DB) http.Handler {
 	apiRouter.HandleFunc("/bookmark", b.AddBookmark).Methods("POST")
 	d := api.NewDebug(db)
 	apiRouter.HandleFunc("/debug", d.GetDebug).Methods("GET")
+	me := api.NewMe(db)
+	apiRouter.HandleFunc("/me", me.GetProfile).Methods("GET")
 
 	viewsRouter := r.PathPrefix("/views").Subrouter()
 	viewsRouter.HandleFunc("/title", TitleHandler).Methods("GET")

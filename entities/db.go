@@ -22,7 +22,7 @@ type DB struct {
 
 // NewQuery is not implemented yet
 func (db *DB) NewQuery(kind string) *Query {
-	return &Query{db: db, kind: kind}
+	return &Query{db: db, kind: kind, limit: -1, offset: -1}
 }
 
 // ConvertDatoms implements Converter
@@ -327,7 +327,7 @@ func (db *DB) Get(id string, dst interface{}) error {
 
 // GetMulti fetches many keys
 // dst is a pointer to a slice
-func (db *DB) GetMulti(ids []string, dst interface{}) {
+func (db *DB) GetMulti(ids []string, dst interface{}) error {
 	v := reflect.ValueOf(dst).Elem() // v is a Value(sliceInstance)
 	entityType := v.Type().Elem()    // v is a V(sliceInstance)->T(sliceType)->T(inner type)
 
@@ -336,6 +336,7 @@ func (db *DB) GetMulti(ids []string, dst interface{}) {
 		db.Get(id, entity)
 		v.Set(reflect.Append(v, reflect.ValueOf(entity).Elem()))
 	}
+	return nil
 }
 
 func eavOp(datoms []Datom) feed.Op {

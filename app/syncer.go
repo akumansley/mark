@@ -1,6 +1,7 @@
 package app
 
 import (
+	"bytes"
 	"fmt"
 	"time"
 
@@ -8,6 +9,7 @@ import (
 	"github.com/awans/mark/feed"
 )
 
+// Sync starts a goroutine that runs sync every durationSpec
 func Sync(durationSpec string, db *entities.DB) error {
 	duration, err := time.ParseDuration(durationSpec)
 	if err != nil {
@@ -19,7 +21,16 @@ func Sync(durationSpec string, db *entities.DB) error {
 			fmt.Println("Syncing at", t)
 			feeds, err := db.GetFeeds()
 			pubs, err := db.GetPubs()
-			newPubs, newFeeds, err := feed.Sync(pubs, feeds)
+			self, err := db.GetSelf()
+
+			var other []feed.Pub
+			for _, p := range pubs {
+				if !bytes.Equal(p.URLHash(), self.URLHash()) {
+					other = append(other, p)
+				}
+			}
+
+			newPubs, newFeeds, err := feed.Sync(other, feeds)
 			if err != nil {
 				continue
 			}

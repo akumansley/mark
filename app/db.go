@@ -23,7 +23,8 @@ func (db *DB) Close() {
 // GetStream returns a user's stream
 func (db *DB) GetStream() ([]Bookmark, error) {
 	var bookmarks []Bookmark
-	db.e.GetAll(&bookmarks)
+	q := db.e.NewQuery("Bookmark").Order("-URL").Limit(10)
+	q.GetAll(&bookmarks)
 	return bookmarks, nil
 }
 
@@ -34,22 +35,27 @@ func (db *DB) AddBookmark(b *Bookmark) error {
 	return err
 }
 
+// GetPubs returns all pubs
 func (db *DB) GetPubs() ([]feed.Pub, error) {
 	return db.e.GetPubs()
 }
 
+// PutPub adds a pub
 func (db *DB) PutPub(p *feed.Pub) error {
 	return db.e.PutPub(p)
 }
 
+// GetFeeds returns all feeds
 func (db *DB) GetFeeds() ([]feed.SignedFeed, error) {
 	return db.e.GetFeeds()
 }
 
+// GetFeed returns a specific feed
 func (db *DB) GetFeed(id string) (feed.SignedFeed, error) {
 	return db.e.GetFeed(id)
 }
 
+// PutFeed sets a feed in the db
 func (db *DB) PutFeed(f feed.SignedFeed) error {
 	return db.e.PutFeed(f)
 }

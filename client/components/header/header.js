@@ -24,7 +24,7 @@ function Component(props) {
             <span className="underline-if-active">All</span>
           </IndexLink>
           <Link activeStyle={activeStyle} activeClassName="active" style={linkStyle} to="/me">
-            <span className="underline-if-active">Me</span>
+            <span className="underline-if-active">Profile</span>
           </Link>
         </div>
     )

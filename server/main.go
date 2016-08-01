@@ -44,6 +44,7 @@ func New(db *app.DB) http.Handler {
 	apiRouter.HandleFunc("/debug", d.GetDebug).Methods("GET")
 	me := api.NewMe(db)
 	apiRouter.HandleFunc("/me", me.GetProfile).Methods("GET")
+	apiRouter.HandleFunc("/me", me.PutProfile).Methods("PUT")
 
 	viewsRouter := r.PathPrefix("/views").Subrouter()
 	viewsRouter.HandleFunc("/title", TitleHandler).Methods("GET")

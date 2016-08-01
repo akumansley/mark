@@ -5,6 +5,7 @@ import Colors from '../../colors';
 import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
 import {connect} from 'react-redux';
 import { addMark, updateUrl, updateTitle } from '../../actions';
+import Styles from '../../styles';
 
 var inputWrapper = {
     display: "flex",
@@ -12,29 +13,7 @@ var inputWrapper = {
     alignItems: "stretch",
     margin: "12px 0"
 }
-var input = {
-    border: "none",
-    fontSize: "inherit",
-    fontWeight: "300",
-    display: "block",
-    margin: "12px 0",
-    ":focus": {
-        outline: "none"
-    }
-}
 
-var addBtnStyle = {
-    background: Colors.accentLight,
-    border: "none",
-    borderRadius: 3,
-    color: Colors.accent,
-    padding: 5,
-    fontSize: 14,
-    marginBottom: 28,
-    marginTop: 12,
-    alignSelf: "flex-start",
-    width: 150
-}
 var flexCol = {
     display: "flex",
     flexDirection: "column"
@@ -64,23 +43,23 @@ function Component(props) {
     let title, addBtn;
     if (props.shouldShowTitle) {
         title = (
-            <input key="title" style={input} value={props.title} onChange={onTitleChange} placeholder="Title.." type="text"></input>
+            <input key="title" style={Styles.input} value={props.title} onChange={onTitleChange} placeholder="Title.." type="text"></input>
         )
         addBtn = (
-            <button key="addBtn" onClick={onClickAdd} style={addBtnStyle}>Add</button>
+            <button key="addBtn" onClick={onClickAdd} style={Styles.actionButton}>Add</button>
         )
     }
 
     return (
         <div style={inputWrapper}>
-            <input key="url" value={props.url} style={input} placeholder="Add.." onKeyDown={onSubmit} onChange={onChange} type="text"></input>
+            <input key="url" value={props.url} style={Styles.input} placeholder="Add.." onKeyDown={onSubmit} onChange={onChange} type="text"></input>
             <ReactCSSTransitionGroup
               transitionName="fade"
               style={flexCol}
               transitionAppear={true}
               transitionEnter={true}
               transitionAppearTimeout={200}
-              transitionEnterTimeout={200} 
+              transitionEnterTimeout={200}
               transitionLeaveTimeout={1}>
                 {title}
                 {addBtn}

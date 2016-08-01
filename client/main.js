@@ -4,9 +4,9 @@ import { App } from './app';
 import { Feed } from './components/feed/feed'
 import { Me } from './components/me/me'
 
-import { createStore, applyMiddleware } from 'redux';
+import { createStore, applyMiddleware, compose } from 'redux';
 import reducer from './reducer';
-import { fetchStream } from './actions';
+import { fetchStream, loadProfile } from './actions';
 import { Provider } from 'react-redux';
 import thunkMiddleware from 'redux-thunk';
 
@@ -25,11 +25,13 @@ const logger = store => next => action => {
 
 const store = createStore(
   reducer,
-  applyMiddleware(thunkMiddleware, logger)
+  compose(applyMiddleware(thunkMiddleware, logger), 
+  window.devToolsExtension ? window.devToolsExtension() : f => f)
 );
 
 const history = syncHistoryWithStore(browserHistory, store)
 store.dispatch(fetchStream());
+store.dispatch(loadProfile());
 
 render(
   <Provider store={store}>

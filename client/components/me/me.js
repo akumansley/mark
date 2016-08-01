@@ -16,7 +16,7 @@ const labelStyle = {
 
 const Component = props => {
   let name = "";
-  if (props.me) {
+  if (props.me.has('name')) {
     name = props.me.get('name');
   }
   function onClick(evt) {

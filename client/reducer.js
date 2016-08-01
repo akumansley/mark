@@ -78,7 +78,7 @@ function title(state="", action) {
   }
 }
 
-function me(state={}, action) {
+function me(state=Map({}), action) {
   switch (action.type) {
     case 'LOAD_PROFILE_SUCCESS':
       return action.payload;

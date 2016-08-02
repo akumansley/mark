@@ -43,6 +43,7 @@ var moreStyle = {
   }
 }
 
+
 const Component = props => {
     const {items} = props;
     return (
@@ -54,9 +55,10 @@ const Component = props => {
                     <div style={itemStyle} key={i.get('id')}>
                       <div style={leftStyle}>
                         <a href={i.get('url')} style={titleStyle}>{i.get('title')}</a>
-                        <span style={urlStyle}> {i.get('short_url')}</span>
+                        <span style={urlStyle}>
+                        {i.get('profile').get('name')} - {i.get('short_url')} </span>
                       </div>
-                      <div>
+                      <div style={urlStyle}>
                       </div>
                     </div>
                 )

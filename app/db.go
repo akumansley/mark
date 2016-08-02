@@ -1,6 +1,7 @@
 package app
 
 import (
+	"errors"
 	"time"
 
 	"github.com/awans/mark/entities"
@@ -38,8 +39,8 @@ func (db *DB) AddBookmark(b *Bookmark) error {
 	return err
 }
 
-// GetProfile returns the current user's profile
-func (db *DB) GetProfile() (*Profile, error) {
+// GetUserProfile returns the current user's profile
+func (db *DB) GetUserProfile() (*Profile, error) {
 	feed, err := db.e.UserFeed()
 	if err != nil {
 		return nil, err
@@ -62,9 +63,21 @@ func (db *DB) GetProfile() (*Profile, error) {
 	return p, nil
 }
 
+// GetProfile gets a profile by feedID
+func (db *DB) GetProfile(feedID string) (*Profile, error) {
+	var ps []Profile
+	db.e.NewQuery("Profile").Filter("FeedID =", feedID).GetAll(&ps)
+
+	if len(ps) == 0 {
+		return nil, errors.New("Profile not found")
+	}
+	return &ps[0], nil
+
+}
+
 // SetProfile sets the current user's Profile
 func (db *DB) SetProfile(p *Profile) error {
-	old, err := db.GetProfile()
+	old, err := db.GetUserProfile()
 	if err != nil {
 		return err
 	}

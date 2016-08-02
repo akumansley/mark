@@ -21,7 +21,7 @@ func NewMe(db *app.DB) *Me {
 
 // GetProfile returns the current user's profile
 func (m *Me) GetProfile(w http.ResponseWriter, r *http.Request) {
-	p, err := m.db.GetProfile()
+	p, err := m.db.GetUserProfile()
 	if err != nil {
 		panic(err)
 	}

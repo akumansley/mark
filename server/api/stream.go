@@ -12,12 +12,17 @@ type Stream struct {
 	db *app.DB
 }
 
-// NewFeed builds a stream resource
+// NewStream builds a stream resource
 func NewStream(db *app.DB) *Stream {
 	return &Stream{db: db}
 }
 
-// GetFeed returns the current user's stream
+type streamBookmark struct {
+	app.Bookmark
+	Profile *app.Profile `json:"profile"`
+}
+
+// GetStream returns the current user's stream
 func (s *Stream) GetStream(w http.ResponseWriter, r *http.Request) {
 	bookmarks, err := s.db.GetStream()
 	if err != nil {
@@ -27,6 +32,15 @@ func (s *Stream) GetStream(w http.ResponseWriter, r *http.Request) {
 		bookmarks = make([]app.Bookmark, 0)
 	}
 
+	var sbs []streamBookmark
+	for _, b := range bookmarks {
+		p, err := s.db.GetProfile(b.FeedID)
+		if err != nil {
+			panic(err)
+		}
+		sbs = append(sbs, streamBookmark{Bookmark: b, Profile: p})
+	}
+
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	json.NewEncoder(w).Encode(bookmarks)
+	json.NewEncoder(w).Encode(sbs)
 }

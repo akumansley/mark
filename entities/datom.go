@@ -30,7 +30,20 @@ func (d *Datom) UnmarshalJSON(data []byte) error {
 	}
 	d.EntityID = ary[0].(string)
 	d.Attribute = ary[1].(string)
-	d.Value = ary[2]
+
+	switch ary[2].(type) {
+	case float64:
+		v := ary[2].(float64)
+		d.Value = int(v)
+	case string:
+		d.Value = ary[2]
+	case bool:
+		d.Value = ary[2]
+	case nil:
+		d.Value = nil
+	default:
+		panic("Invalid value")
+	}
 	d.Added = ary[3].(bool)
 	return nil
 }

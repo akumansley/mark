@@ -63,13 +63,7 @@ const FeedItem = React.createClass({
 const PAGE_SIZE = 30;
 
 const Component = React.createClass({
-    getInitialState: function() {
-        return {
-            elements: this.buildElements(),
-        }
-    },
-
-    buildElements: function(start, end) {
+    buildElements: function() {
         return this.props.items.map(item => (
           <FeedItem key={item.get('id')} item={item}/>
         ));
@@ -77,12 +71,6 @@ const Component = React.createClass({
 
     handleInfiniteLoad: function() {
         this.props.fetchStream(PAGE_SIZE, this.props.items.size);
-    },
-
-    componentWillReceiveProps: function (newProps) {
-      this.setState({
-        elements: this.buildElements()
-      });
     },
 
     render: function() {
@@ -94,7 +82,7 @@ const Component = React.createClass({
             onInfiniteLoad={this.handleInfiniteLoad}
             isInfiniteLoading={this.props.loading}
             useWindowAsScrollContainer={true}>
-              {this.state.elements}
+              {this.buildElements()}
           </Infinite>
         </div>
       )
@@ -104,7 +92,8 @@ const Component = React.createClass({
 
 const Styled = Radium(Component)
 
-const selectItems = state => state.bookmarks.get('items').valueSeq().sortBy(v => v.created_at);
+const selectItems = state => state.bookmarks.get('items');
+const sortItems = createSelector([selectItems], items => items.valueSeq().sortBy(v => v.created_at).toList());
 
 function shortUrl(url) {
   const u = new URL(url);
@@ -114,7 +103,7 @@ function shortUrl(url) {
   return r;
 }
 
-const mixShortUrl = createSelector([selectItems], items => {
+const mixShortUrl = createSelector([sortItems], items => {
   return items.map(i => i.set('short_url', shortUrl(i.get('url')) ));
 });
 

@@ -76,7 +76,7 @@ export function addMark(url, title) {
       }
       return res.json();
     }).then(json => {
-      dispatch(fetchStream());
+      dispatch(fetchStream(30, 0));
       dispatch(addMarkSuccess());
     }).catch(err => dispatch(addMarkFailed(err)));
   }

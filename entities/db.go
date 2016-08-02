@@ -245,6 +245,7 @@ func (db *DB) GetSelf() (*feed.Pub, error) {
 func (db *DB) applyDatom(d Datom) {
 	// eav, aev, ave, vae
 	// we probably don't need all of these..
+	fmt.Printf("Apply: %v\n", d)
 	if d.Added {
 		db.store.Set(d.EAVKey(), []byte(fmt.Sprintf("%v", d.Value)))
 		db.store.Set(d.AEVKey(), []byte(fmt.Sprintf("%v", d.Value)))

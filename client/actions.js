@@ -31,12 +31,13 @@ function fetchStreamFailed(error) {
 }
 
 // this is a thunk
-export function fetchStream() {
+export function fetchStream(count, offset) {
   return function (dispatch) {
     // start the request
     dispatch(requestStream());
 
-    return fetch('/api/stream')
+    let qs = "?count=" + encodeURIComponent(count) + "&offset=" + encodeURIComponent(offset);
+    return fetch('/api/stream' + qs)
             .then(res => {
               if (res.status >= 400) {
                 throw new Error(res.status);
@@ -74,8 +75,10 @@ export function addMark(url, title) {
         throw new Error(res.status);
       }
       return res.json();
-    }).then(json => dispatch(addMarkSuccess(Immutable.fromJS(json))))
-      .catch(err => dispatch(addMarkFailed(err)));
+    }).then(json => {
+      dispatch(fetchStream());
+      dispatch(addMarkSuccess());
+    }).catch(err => dispatch(addMarkFailed(err)));
   }
 }
 

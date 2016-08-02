@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/awans/mark/app"
 )
@@ -24,7 +25,18 @@ type streamBookmark struct {
 
 // GetStream returns the current user's stream
 func (s *Stream) GetStream(w http.ResponseWriter, r *http.Request) {
-	bookmarks, err := s.db.GetStream()
+	countS := r.URL.Query()["count"][0]
+	count, err := strconv.Atoi(countS)
+	if err != nil {
+		panic(err)
+	}
+	offsetS := r.URL.Query()["offset"][0]
+	offset, err := strconv.Atoi(offsetS)
+	if err != nil {
+		panic(err)
+	}
+
+	bookmarks, err := s.db.GetStream(count, offset)
 	if err != nil {
 		panic(err)
 	}
@@ -32,7 +44,7 @@ func (s *Stream) GetStream(w http.ResponseWriter, r *http.Request) {
 		bookmarks = make([]app.Bookmark, 0)
 	}
 
-	var sbs []streamBookmark
+	sbs := make([]streamBookmark, 0)
 	for _, b := range bookmarks {
 		p, err := s.db.GetProfile(b.FeedID)
 		if err != nil {

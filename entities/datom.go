@@ -1,8 +1,8 @@
 package entities
 
 import (
-	"fmt"
 	"encoding/json"
+	"fmt"
 )
 
 // Datom is an entity-attribute-value statement
@@ -34,8 +34,6 @@ func (d *Datom) UnmarshalJSON(data []byte) error {
 	d.Added = ary[3].(bool)
 	return nil
 }
-
-
 
 // EAVKey returns the key in the EAV index for this datom
 func (d *Datom) EAVKey() []byte {

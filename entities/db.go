@@ -323,6 +323,7 @@ func (db *DB) Get(id string, dst interface{}) error {
 			case reflect.Int:
 				i, err := strconv.Atoi(string(v))
 				if err != nil {
+					fmt.Print(err)
 					continue
 				}
 				field.SetInt(int64(i))

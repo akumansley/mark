@@ -4,7 +4,7 @@ import { routerReducer } from 'react-router-redux'
 
 
 const initBookmarks = Map({
-  items: List([]),
+  items: Map({}),
   loading: false,
   error: null
 });
@@ -16,15 +16,20 @@ function bookmarks(state=initBookmarks, action) {
       return state.set('loading', true);
     case 'FETCH_STREAM_SUCCESS':
       return state.set('loading', false)
-                  .set('items', action.payload);
+                  .update('items', items => (
+                    items.withMutations(m => {
+                      for (let i of action.payload.values()) {
+                        m.set(i.get('id'), i)
+                      }
+                    })
+                  ));
     case 'FETCH_STREAM_FAILED':
       return state.set('loading', false)
                   .set('error', action.payload);
     case 'POST_MARK':
       return state.set('loading', true);
     case 'ADD_MARK_SUCCESS':
-      return state.set('loading', false)
-                  .update('items', i => i.push(action.payload));
+      return state.set('loading', false);
     case 'ADD_MARK_FAILED':
       return state.set('loading', false)
                   .set('error', action.payload);

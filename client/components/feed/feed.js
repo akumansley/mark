@@ -1,9 +1,11 @@
 import React from 'react'
 import Radium from 'radium'
 import Colors from '../../colors'
+import { fetchStream } from '../../actions'
 import { connect } from 'react-redux'
 import { Add } from '../add/add'
 import { createSelector } from 'reselect'
+import Infinite from 'react-infinite'
 
 // var moreSrc = require('../../assets/more.png')
 
@@ -43,34 +45,66 @@ var moreStyle = {
   }
 }
 
+const FeedItem = React.createClass({
+    render: function() {
+      const i = this.props.item;
+      return (
+        <div style={itemStyle} key={i.get('id')}>
+          <div style={leftStyle}>
+            <a href={i.get('url')} style={titleStyle}>{i.get('title')}</a>
+            <span style={urlStyle}>
+            {i.get('profile').get('name')} - {i.get('short_url')} </span>
+          </div>
+        </div>
+      );
+    }
+});
 
-const Component = props => {
-    const {items} = props;
-    return (
-      <div>
-        <Add />
-        <ul>
-            {props.items.map(i => {
-                return (
-                    <div style={itemStyle} key={i.get('id')}>
-                      <div style={leftStyle}>
-                        <a href={i.get('url')} style={titleStyle}>{i.get('title')}</a>
-                        <span style={urlStyle}>
-                        {i.get('profile').get('name')} - {i.get('short_url')} </span>
-                      </div>
-                      <div style={urlStyle}>
-                      </div>
-                    </div>
-                )
-            })}
-        </ul>
-      </div>
-    )
-}
+const PAGE_SIZE = 30;
+
+const Component = React.createClass({
+    getInitialState: function() {
+        return {
+            elements: this.buildElements(),
+        }
+    },
+
+    buildElements: function(start, end) {
+        return this.props.items.map(item => (
+          <FeedItem key={item.get('id')} item={item}/>
+        ));
+    },
+
+    handleInfiniteLoad: function() {
+        this.props.fetchStream(PAGE_SIZE, this.props.items.size);
+    },
+
+    componentWillReceiveProps: function (newProps) {
+      this.setState({
+        elements: this.buildElements()
+      });
+    },
+
+    render: function() {
+      return (
+        <div>
+          <Add />
+          <Infinite elementHeight={40}
+            infiniteLoadBeginEdgeOffset={200}
+            onInfiniteLoad={this.handleInfiniteLoad}
+            isInfiniteLoading={this.props.loading}
+            useWindowAsScrollContainer={true}>
+              {this.state.elements}
+          </Infinite>
+        </div>
+      )
+    }
+});
+
 
 const Styled = Radium(Component)
 
-const selectItems = state => state.bookmarks.get('items');
+const selectItems = state => state.bookmarks.get('items').valueSeq().sortBy(v => v.created_at);
 
 function shortUrl(url) {
   const u = new URL(url);
@@ -86,7 +120,16 @@ const mixShortUrl = createSelector([selectItems], items => {
 
 const Connected = connect(
   function mapStateToProps(state) {
-    return { items: mixShortUrl(state) }
+    return {
+      items: mixShortUrl(state),
+      loading: state.bookmarks.get('loading'),
+    }
+  },
+  function mapDispatchToProps(dispatch) {
+    return {
+      fetchStream: (count, offset) => dispatch(fetchStream(count, offset))
+    }
+
   }
 )(Styled);
 

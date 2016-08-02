@@ -24,9 +24,9 @@ func (db *DB) Close() {
 }
 
 // GetStream returns a user's stream
-func (db *DB) GetStream() ([]Bookmark, error) {
+func (db *DB) GetStream(count, offset int) ([]Bookmark, error) {
 	var bookmarks []Bookmark
-	q := db.e.NewQuery("Bookmark").Order("-CreatedAt").Limit(10)
+	q := db.e.NewQuery("Bookmark").Order("-CreatedAt").Limit(count).Offset(offset)
 	q.GetAll(&bookmarks)
 	return bookmarks, nil
 }

@@ -25,20 +25,18 @@ const logger = store => next => action => {
 
 const store = createStore(
   reducer,
-  compose(applyMiddleware(thunkMiddleware, logger), 
+  compose(applyMiddleware(thunkMiddleware, logger),
   window.devToolsExtension ? window.devToolsExtension() : f => f)
 );
 
 const history = syncHistoryWithStore(browserHistory, store)
-store.dispatch(fetchStream());
-store.dispatch(loadProfile());
 
 render(
   <Provider store={store}>
     <Router history={history}>
       <Route path="/" component={App}>
-        <IndexRoute component={Feed} />
-        <Route path="me" component={Me} />
+        <IndexRoute component={Feed} onEnter={() => store.dispatch(fetchStream())} />
+        <Route path="me" component={Me} onEnter={() => store.dispatch(loadProfile())}/>
       </Route>
     </Router>
   </Provider>,

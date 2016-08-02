@@ -165,10 +165,10 @@ func (sf SignedFeed) CurrentKey() (*jose.JsonWebKey, error) {
 }
 
 // Fingerprint returns a fingerprint of a pub key
-func (sf SignedFeed) Fingerprint() ([]byte, error) {
+func (sf SignedFeed) Fingerprint() (string, error) {
 	jwk, err := sf.CurrentKey()
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	return fingerprint(jwk)
 }
@@ -218,34 +218,35 @@ func (feed *Feed) CurrentKey() (*jose.JsonWebKey, error) {
 	return nil, errors.New("Feed had no declared key")
 }
 
+// Len returns the length of a feed
 func (feed *Feed) Len() int {
 	return len(feed.Ops)
 }
 
-func fingerprint(jwk *jose.JsonWebKey) ([]byte, error) {
+func fingerprint(jwk *jose.JsonWebKey) (string, error) {
 	thumbprint, err := jwk.Thumbprint(crypto.SHA256)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	out := make([]byte, base64.RawURLEncoding.EncodedLen(len(thumbprint)))
 	base64.RawURLEncoding.Encode(out, thumbprint)
-	return out, nil
+	return string(out), nil
 }
 
 // Fingerprint returns a fingerprint of a pub key
-func (feed *Feed) Fingerprint() ([]byte, error) {
+func (feed *Feed) Fingerprint() (string, error) {
 	jwk, err := feed.CurrentKey()
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	return fingerprint(jwk)
 }
 
 // Fingerprint returns a fingerprint of a pub key
-func Fingerprint(key *rsa.PublicKey) ([]byte, error) {
+func Fingerprint(key *rsa.PublicKey) (string, error) {
 	jwk, err := AsJWK(key)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	return fingerprint(jwk)
 }

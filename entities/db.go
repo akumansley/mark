@@ -17,7 +17,7 @@ import (
 // DB is the access point to the entity DB
 type DB struct {
 	store Store
-	fp    []byte
+	fp    string
 	c     *feed.Coder
 	key   *rsa.PrivateKey // maybe hide this
 }
@@ -42,7 +42,7 @@ func ConvertJWK(bytes []byte) (interface{}, error) {
 }
 
 // NewDB is a constructor for a db
-func NewDB(store Store, fp []byte, key *rsa.PrivateKey) *DB {
+func NewDB(store Store, fp string, key *rsa.PrivateKey) *DB {
 	c := feed.NewCoder()
 	c.RegisterOp("eav", ConvertDatoms)
 	c.RegisterOp("declare-key", ConvertJWK)
@@ -98,7 +98,7 @@ func (db *DB) LoadFeed(feed *feed.Feed) error {
 	return nil
 }
 
-func (db *DB) applyOp(op feed.Op, fp []byte) {
+func (db *DB) applyOp(op feed.Op, fp string) {
 	if op.Op != "eav" {
 		return
 	}
@@ -182,7 +182,7 @@ func (db *DB) PutFeed(sf feed.SignedFeed) error {
 	if err != nil {
 		return err
 	}
-	feedK := Key{path: [][]byte{[]byte("feed"), fp}}
+	feedK := NewKey("feed", fp)
 	db.store.Set(feedK.ToBytes(), feedBytes)
 	db.RebuildIndexes() // TODO this is too much work
 	return nil
@@ -246,10 +246,8 @@ func (db *DB) applyDatom(d Datom) {
 	// eav, aev, ave, vae
 	// we probably don't need all of these..
 	if d.Added {
-		// TODO value shouldn't always have to be a string
-		// maybe store it as gob?
-		db.store.Set(d.EAVKey(), []byte(fmt.Sprintf("%s", d.Value)))
-		db.store.Set(d.AEVKey(), []byte(fmt.Sprintf("%s", d.Value)))
+		db.store.Set(d.EAVKey(), []byte(fmt.Sprintf("%v", d.Value)))
+		db.store.Set(d.AEVKey(), []byte(fmt.Sprintf("%v", d.Value)))
 		db.store.Set(d.AVEKey(), []byte(d.EntityID))
 		db.store.Set(d.VAEKey(), []byte(d.EntityID))
 	} else {
@@ -260,7 +258,7 @@ func (db *DB) applyDatom(d Datom) {
 	}
 }
 
-func (db *DB) ensureSysKeys(entityID string, fp []byte) {
+func (db *DB) ensureSysKeys(entityID string, fp string) {
 	fd := Datom{
 		EntityID:  entityID,
 		Attribute: "db/FeedID",

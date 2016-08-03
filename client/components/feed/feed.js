@@ -5,7 +5,7 @@ import { fetchStream } from '../../actions'
 import { connect } from 'react-redux'
 import { Add } from '../add/add'
 import { createSelector } from 'reselect'
-import Infinite from 'react-infinite'
+
 
 // var moreSrc = require('../../assets/more.png')
 
@@ -61,39 +61,56 @@ const FeedItem = React.createClass({
 });
 
 const PAGE_SIZE = 30;
+const TRIGGER_THRESHOLD = 100;
 
 const Component = React.createClass({
-    buildElements: function() {
-        return this.props.items.map(item => (
-          <FeedItem key={item.get('id')} item={item}/>
-        ));
-    },
+  componentWillMount: function () {
+    window.addEventListener("scroll", this.handleScroll);
+  },
 
-    handleInfiniteLoad: function() {
-        this.props.fetchStream(PAGE_SIZE, this.props.items.size);
-    },
+  handleScroll: function (evt) {
+    // From http://stackoverflow.com/questions/1145850/how-to-get-height-of-entire-document-with-javascript
+    var body = document.body
+    var html = document.documentElement;
+    var totalHeight = Math.max(body.scrollHeight, body.offsetHeight, html.clientHeight,
+      html.scrollHeight, html.offsetHeight );
 
-    render: function() {
-      return (
-        <div>
-          <Add />
-          <Infinite elementHeight={40}
-            infiniteLoadBeginEdgeOffset={200}
-            onInfiniteLoad={this.handleInfiniteLoad}
-            isInfiniteLoading={this.props.loading}
-            useWindowAsScrollContainer={true}>
-              {this.buildElements()}
-          </Infinite>
-        </div>
-      )
+    const innerHeight = window.innerHeight;
+    const scrollTop = window.scrollY;
+
+    var totalScrolled = scrollTop + innerHeight;
+    if (totalScrolled + TRIGGER_THRESHOLD > totalHeight &&
+      !this.props.loading && this.props.hasMore) {
+      this.loadMore();
     }
+  },
+
+
+  buildElements: function() {
+      return this.props.items.map(item => (
+        <FeedItem key={item.get('id')} item={item}/>
+      ));
+  },
+
+  loadMore: function() {
+      this.props.fetchStream(PAGE_SIZE, this.props.items.size);
+  },
+
+  render: function() {
+    return (
+      <div>
+        <Add />
+        {this.buildElements()}
+      </div>
+    )
+  }
 });
 
 
 const Styled = Radium(Component)
 
 const selectItems = state => state.bookmarks.get('items');
-const sortItems = createSelector([selectItems], items => items.valueSeq().sortBy(v => v.created_at).toList());
+const sortItems = createSelector([selectItems], items => items.valueSeq().sortBy(v => -1 * v.get('created_at')).toList());
 
 function shortUrl(url) {
   const u = new URL(url);
@@ -112,6 +129,7 @@ const Connected = connect(
     return {
       items: mixShortUrl(state),
       loading: state.bookmarks.get('loading'),
+      hasMore: state.bookmarks.get('hasMore'),
     }
   },
   function mapDispatchToProps(dispatch) {

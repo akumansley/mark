@@ -35,7 +35,7 @@ render(
   <Provider store={store}>
     <Router history={history}>
       <Route path="/" component={App}>
-        <IndexRoute component={Feed} />
+        <IndexRoute component={Feed} onEnter={() => store.dispatch(fetchStream(30, 0))}/>
         <Route path="me" component={Me} onEnter={() => store.dispatch(loadProfile())}/>
       </Route>
     </Router>

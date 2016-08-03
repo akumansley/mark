@@ -1,6 +1,9 @@
 package feed
 
-import "log"
+import (
+	"log"
+	"time"
+)
 
 // Protocol related paths
 const (
@@ -12,7 +15,7 @@ const (
 )
 
 type pubLen struct {
-	Pub Pub
+	Pub *Pub
 	Len int
 }
 
@@ -34,16 +37,22 @@ func Sync(pubs []Pub, feeds []SignedFeed) ([]Pub, []SignedFeed, error) {
 	feedPubs := make(map[string]pubLen)
 	pubsByURL := make(map[string]Pub)
 
-	for _, pub := range pubs {
+	for i := range pubs {
+		pub := &pubs[i]
 		if pub.ShouldUpdate() {
+			pub.LastChecked = time.Now().Unix()
 			pubsToAdd, err := pub.GetPubs()
-
 			if err != nil {
 				log.Println(err)
+				pub.Failures++
+				continue
 			}
 
 			for _, pubToAdd := range pubsToAdd {
-				pubsByURL[string(pubToAdd.URLHash())] = pubToAdd
+				key := string(pubToAdd.URLHash())
+				if _, ok := pubsByURL[key]; !ok {
+					pubsByURL[key] = pubToAdd
+				}
 			}
 
 			// TODO set last_checked
@@ -51,6 +60,7 @@ func Sync(pubs []Pub, feeds []SignedFeed) ([]Pub, []SignedFeed, error) {
 			if err != nil {
 				// we should eventually fail-out the pub
 				log.Println(err)
+				pub.Failures++
 				continue
 			}
 
@@ -82,6 +92,7 @@ func Sync(pubs []Pub, feeds []SignedFeed) ([]Pub, []SignedFeed, error) {
 	var outFeeds []SignedFeed
 	for fp, pl := range feedPubs {
 		pub := pl.Pub
+		pub.LastUpdated = time.Now().Unix()
 		feed, err := pub.GetFeed(fp)
 		if err != nil {
 			log.Println(err)

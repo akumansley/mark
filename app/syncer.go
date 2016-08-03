@@ -37,6 +37,10 @@ func Sync(durationSpec string, db *entities.DB) error {
 			for _, f := range newFeeds {
 				db.PutFeed(f)
 			}
+			// update old pubs too to track failures and backoff
+			for _, p := range other {
+				db.PutPub(&p)
+			}
 			for _, p := range newPubs {
 				db.PutPub(&p)
 			}

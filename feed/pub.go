@@ -11,11 +11,14 @@ import (
 	"time"
 )
 
+const failOut = 10
+
 // Pub represents a URL-addressable node
 type Pub struct {
 	URL         string `json:"url"`
 	LastChecked int64  `json:"last_checked"`
 	LastUpdated int64  `json:"last_updated"`
+	Failures    int    `json:"failures"`
 }
 
 // Head is the length of a feed
@@ -33,6 +36,9 @@ type Announcement struct {
 // ShouldUpdate says whether this pub should be checked
 // uses exponential backoff
 func (p *Pub) ShouldUpdate() bool {
+	if p.Failures > failOut {
+		return false
+	}
 	now := time.Now().Unix()
 	uncertainDuration := now - p.LastChecked
 	staleDuration := p.LastChecked - p.LastUpdated

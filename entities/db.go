@@ -245,7 +245,6 @@ func (db *DB) GetSelf() (*feed.Pub, error) {
 func (db *DB) applyDatom(d Datom) {
 	// eav, aev, ave, vae
 	// we probably don't need all of these..
-	fmt.Printf("Apply: %v\n", d)
 	if d.Added {
 		db.store.Set(d.EAVKey(), []byte(fmt.Sprintf("%v", d.Value)))
 		db.store.Set(d.AEVKey(), []byte(fmt.Sprintf("%v", d.Value)))
@@ -439,4 +438,22 @@ func (db *DB) announce(f feed.SignedFeed) error {
 	}
 
 	return feed.Announce(self, pubs, f)
+}
+
+// Dump returns every key and value in the db
+func (db *DB) Dump() [][]byte {
+	var out [][]byte
+
+	k := NewKey("")
+	i, err := db.store.Prefix(k.ToBytes())
+	if err != nil {
+		panic(err)
+	}
+	for k, v, err := i.Next(); err == nil; k, v, err = i.Next() {
+		out = append(out, k)
+		out = append(out, []byte("\n"))
+		out = append(out, v)
+		out = append(out, []byte("\n"))
+	}
+	return out
 }

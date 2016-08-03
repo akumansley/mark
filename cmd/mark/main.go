@@ -23,6 +23,7 @@ const usage = `mark
 Usage:
   mark init [-d <dir>]
 	mark serve [-d <dir>] [-p <port>] <url>
+	mark dump [-d <dir>]
 
 Options:
 	-d <dir>, --data-dir <dir>  Specify data directory [default: /var/opt/mark]
@@ -82,9 +83,13 @@ func openDbAndKeys(markDir string) (*rsa.PrivateKey, *entities.DB, error) {
 	return key, db, nil
 }
 
+func dump(db *entities.DB) {
+	fmt.Printf("%s", db.Dump())
+}
+
 func serve(db *entities.DB, key *rsa.PrivateKey, port, url string) error {
-	self := feed.Pub{URL: url, LastUpdated: time.Now().Unix(), LastChecked: 0}
-	bootstrap := feed.Pub{URL: bootstrapURL, LastUpdated: time.Now().Unix(), LastChecked: 0}
+	self := feed.Pub{URL: url, LastUpdated: 0, LastChecked: 0}
+	bootstrap := feed.Pub{URL: bootstrapURL, LastUpdated: time.Now().Unix(), LastChecked: time.Now().Unix()}
 
 	db.PutSelf(&self)
 	db.PutPub(&bootstrap)
@@ -130,6 +135,8 @@ func main() {
 			if err != nil {
 				log.Fatal(err)
 			}
+		} else if args["dump"].(bool) {
+			dump(db)
 		}
 	}
 }

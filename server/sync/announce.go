@@ -39,19 +39,20 @@ func (a *AnnounceResource) PutAnnouncement(w http.ResponseWriter, r *http.Reques
 			panic(err)
 		}
 	}
-
-	a.db.PutPub(&announce.Pub)
-	feeds, err := a.db.GetFeeds()
-	newPubs, newFeeds, err := feed.Sync([]feed.Pub{announce.Pub}, feeds)
-	if err != nil {
-		panic(err)
-	}
-	for _, f := range newFeeds {
-		a.db.PutFeed(f)
-	}
-	for _, p := range newPubs {
-		a.db.PutPub(&p)
-	}
+	go func() {
+		a.db.PutPub(&announce.Pub)
+		feeds, err := a.db.GetFeeds()
+		newPubs, newFeeds, err := feed.Sync([]feed.Pub{announce.Pub}, feeds)
+		if err != nil {
+			panic(err)
+		}
+		for _, f := range newFeeds {
+			a.db.PutFeed(f)
+		}
+		for _, p := range newPubs {
+			a.db.PutPub(&p)
+		}
+	}()
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	w.WriteHeader(http.StatusAccepted)

@@ -47,6 +47,7 @@ func Sync(pubs []Pub, feeds []SignedFeed) ([]Pub, []SignedFeed, error) {
 				pub.Failures++
 				continue
 			}
+			pub.Failures = 0 // reset -- we had a sucessful response, so it's still alive
 
 			for _, pubToAdd := range pubsToAdd {
 				key := string(pubToAdd.URLHash())
@@ -55,10 +56,8 @@ func Sync(pubs []Pub, feeds []SignedFeed) ([]Pub, []SignedFeed, error) {
 				}
 			}
 
-			// TODO set last_checked
 			heads, err := pub.GetHeads()
 			if err != nil {
-				// we should eventually fail-out the pub
 				log.Println(err)
 				pub.Failures++
 				continue
@@ -101,6 +100,7 @@ func Sync(pubs []Pub, feeds []SignedFeed) ([]Pub, []SignedFeed, error) {
 		outFeeds = append(outFeeds, *feed)
 	}
 
+	// save off any new friends
 	var outPubs []Pub
 	for _, p := range pubsByURL {
 		outPubs = append(outPubs, p)

@@ -4,7 +4,10 @@ import Colors from '../../colors';
 import Radium from 'radium';
 
 const headerStyles = {
-  marginTop: "48px",
+  marginTop: "0px",
+  '@media (min-width: 400px)': {
+    marginTop: "0 48px",
+  },
   display: "flex",
   flexDirection: "row",
 }

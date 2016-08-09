@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"strings"
 
 	"github.com/awans/mark/feed"
 	"github.com/nu7hatch/gouuid"
@@ -417,14 +418,60 @@ func (db *DB) Put(id string, src interface{}) error {
 }
 
 // Add adds a new entity to the db
-func (db *DB) Add(src interface{}) (id string, err error) {
+func (db *DB) Add(src interface{}) (string, error) {
 	u, err := uuid.NewV4()
 	if err != nil {
 		return "", err
 	}
-	id = u.String()
+	id := u.String()
 	err = db.Put(id, src)
 	return id, err
+}
+
+// Remove an entity from the db by id
+func (db *DB) Remove(id string) error {
+	k := NewKey("eav", id)
+	i, err := db.store.Prefix(k.ToBytes())
+	if err != nil {
+		return err
+	}
+
+	feed, err := db.UserFeed()
+	if err != nil {
+		return err
+	}
+
+	var datoms []Datom
+
+	for k, _, err := i.Next(); err == nil; k, _, err = i.Next() {
+		components := strings.Split(string(k), "/")
+		attr := components[1] + "/" + components[2]
+
+		d := Datom{
+			EntityID:  id,
+			Attribute: attr,
+			Value:     nil,
+			Added:     false,
+		}
+		datoms = append(datoms, d)
+	}
+
+	op := eavOp(datoms)
+	feed.Append(op)
+
+	sf, err := db.PutUserFeed(feed)
+	if err != nil {
+		return err
+	}
+
+	fp, err := feed.Fingerprint()
+	if err != nil {
+		return err
+	}
+
+	db.applyOp(op, fp)
+	db.announce(sf)
+	return nil
 }
 
 func (db *DB) announce(f feed.SignedFeed) error {

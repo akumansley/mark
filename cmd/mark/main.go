@@ -22,8 +22,8 @@ const usage = `mark
 
 Usage:
   mark init [-d <dir>]
-	mark serve [-d <dir>] [-p <port>] <url>
-	mark dump [-d <dir>]
+  mark serve [-d <dir>] [-p <port>] <url>
+  mark dump [-d <dir>]
 
 Options:
 	-d <dir>, --data-dir <dir>  Specify data directory [default: /var/opt/mark]

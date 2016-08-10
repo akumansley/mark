@@ -96,7 +96,7 @@ func serve(db *entities.DB, key *rsa.PrivateKey, port, url string) error {
 
 	// Catch ctrl-c and gracefully exit
 	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
+	signal.Notify(c, os.Interrupt, os.Kill)
 	go func() {
 		<-c
 		db.Close()

@@ -40,6 +40,7 @@ func New(db *app.DB) http.Handler {
 	apiRouter.HandleFunc("/stream", s.GetStream).Methods("GET")
 	b := api.NewBookmark(db)
 	apiRouter.HandleFunc("/bookmark", b.AddBookmark).Methods("POST")
+	apiRouter.HandleFunc("/bookmark/{id}", b.RemoveBookmark).Methods("DELETE")
 	d := api.NewDebug(db)
 	apiRouter.HandleFunc("/debug", d.GetDebug).Methods("GET")
 	me := api.NewMe(db)

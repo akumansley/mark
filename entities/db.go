@@ -107,7 +107,9 @@ func (db *DB) applyOp(op feed.Op, fp string) {
 	entityIDs := make(map[string]bool)
 	for _, datom := range datoms {
 		db.applyDatom(datom)
-		entityIDs[datom.EntityID] = true
+		if datom.Added {
+			entityIDs[datom.EntityID] = true
+		}
 	}
 	for entityID := range entityIDs {
 		db.ensureSysKeys(entityID, fp)
@@ -252,6 +254,7 @@ func (db *DB) applyDatom(d Datom) {
 		db.store.Set(d.AVEKey(), []byte(d.EntityID))
 		db.store.Set(d.VAEKey(), []byte(d.EntityID))
 	} else {
+		// be smarter here so we don't have to save the value on removal
 		db.store.Delete(d.EAVKey())
 		db.store.Delete(d.AEVKey())
 		db.store.Delete(d.AVEKey())
@@ -443,14 +446,14 @@ func (db *DB) Remove(id string) error {
 
 	var datoms []Datom
 
-	for k, _, err := i.Next(); err == nil; k, _, err = i.Next() {
+	for k, v, err := i.Next(); err == nil; k, v, err = i.Next() {
 		components := strings.Split(string(k), "/")
-		attr := components[1] + "/" + components[2]
+		attr := components[2] + "/" + components[3]
 
 		d := Datom{
 			EntityID:  id,
 			Attribute: attr,
-			Value:     nil,
+			Value:     string(v),
 			Added:     false,
 		}
 		datoms = append(datoms, d)
@@ -470,8 +473,8 @@ func (db *DB) Remove(id string) error {
 	}
 
 	db.applyOp(op, fp)
-	db.announce(sf)
-	return nil
+	err = db.announce(sf)
+	return err
 }
 
 func (db *DB) announce(f feed.SignedFeed) error {

@@ -21,7 +21,7 @@ var baseStyle = {
   '@media (min-width: 1000px)': {
     margin: "0 200px",
   },
-  padding: "24px",
+  padding: "16px",
   background: Colors.primaryBackground,
 };
 

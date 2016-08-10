@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/awans/mark/app"
+	"github.com/gorilla/mux"
 )
 
 // Bookmark is a resource
@@ -47,4 +48,15 @@ func (b *Bookmark) AddBookmark(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewEncoder(w).Encode(bookmark); err != nil {
 		panic(err)
 	}
+}
+
+// RemoveBookmark removes an existing bookmark
+func (b *Bookmark) RemoveBookmark(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	err := b.db.RemoveBookmark(id)
+	if err != nil {
+		panic(err)
+	}
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusNoContent)
 }

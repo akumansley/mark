@@ -36,6 +36,8 @@ function bookmarks(state=initBookmarks, action) {
     case 'ADD_MARK_FAILED':
       return state.set('loading', false)
                   .set('error', action.payload);
+    case 'REMOVE_MARK_SUCCESS':
+      return state.update('items', items => (items.delete(action.payload)));
     default:
       return state;
   }

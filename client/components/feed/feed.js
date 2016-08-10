@@ -1,7 +1,7 @@
 import React from 'react'
 import Radium from 'radium'
 import Colors from '../../colors'
-import { fetchStream } from '../../actions'
+import { fetchStream, removeMark } from '../../actions'
 import { connect } from 'react-redux'
 import { Add } from '../add/add'
 import { createSelector } from 'reselect'
@@ -44,10 +44,17 @@ var moreStyle = {
     boxShadow: "1px 1px 1px 1px #eee" ,
   }
 }
+const deleteStyle = {
+  padding: '4px 4px 4px 8px',
+}
 
-const FeedItem = React.createClass({
+const RawItem = React.createClass({
     render: function() {
-      const i = this.props.item;
+      const {removeMark, item: i} = this.props;
+      function clickDelete(evt) {
+        removeMark(i.get('id'));
+      }
+
       return (
         <div style={itemStyle} key={i.get('id')}>
           <div style={leftStyle}>
@@ -55,10 +62,21 @@ const FeedItem = React.createClass({
             <span style={urlStyle}>
             {i.get('profile').get('name')} - {i.get('short_url')} </span>
           </div>
+          <div style={deleteStyle}>
+            <a onClick={clickDelete}>&times;</a>
+          </div>
         </div>
       );
     }
 });
+
+const FeedItem = connect(null,
+  function mapDispatchToProps(dispatch) {
+    return {
+      removeMark: (id) => dispatch(removeMark(id)),
+    }
+  }
+)(RawItem);
 
 const PAGE_SIZE = 30;
 const TRIGGER_THRESHOLD = 100;
@@ -134,7 +152,7 @@ const Connected = connect(
   },
   function mapDispatchToProps(dispatch) {
     return {
-      fetchStream: (count, offset) => dispatch(fetchStream(count, offset))
+      fetchStream: (count, offset) => dispatch(fetchStream(count, offset)),
     }
 
   }

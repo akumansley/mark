@@ -83,6 +83,32 @@ export function addMark(url, title) {
 }
 
 
+const REMOVE_MARK_SUCCESS = "REMOVE_MARK_SUCCESS"
+const REMOVE_MARK_FAILED = "REMOVE_MARK_FAILED"
+const REMOVE_MARK = "REMOVE_MARK"
+
+const removeMarkSuccess = createAction(REMOVE_MARK_SUCCESS);
+const removeMarkFailed = createAction(REMOVE_MARK_FAILED);
+
+export function removeMark(id) {
+  return dispatch => {
+    if (!id) {
+      dispatch(removeMarkFailed(new Error("Cannot delete null id")));
+      return
+    }
+    return fetch('/api/bookmark/' + id, { method: "DELETE"})
+    .then(res => {
+      if (res.status >= 400) {
+        throw new Error(res.status);
+      }
+      return res.text();
+    }).then(json => {
+      dispatch(removeMarkSuccess(id));
+    }).catch(err => dispatch(removeMarkFailed(err)));
+  }
+}
+
+
 const UPDATE_URL = "UPDATE_URL";
 const LOAD_TITLE = "LOAD_TITLE";
 const LOAD_TITLE_SUCCESS = "LOAD_TITLE_SUCCESS";

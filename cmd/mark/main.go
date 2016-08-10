@@ -16,7 +16,7 @@ import (
 	"github.com/docopt/docopt-go"
 )
 
-const bootstrapURL = "http://04cdfbcc.ngrok.io"
+const bootstrapURL = "https://marko.awans.org"
 
 const usage = `mark
 

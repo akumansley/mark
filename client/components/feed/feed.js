@@ -50,9 +50,16 @@ const deleteStyle = {
 
 const RawItem = React.createClass({
     render: function() {
-      const {removeMark, item: i} = this.props;
+      const {removeMark, me, item: i} = this.props;
       function clickDelete(evt) {
         removeMark(i.get('id'));
+      }
+
+      let delNode = null;
+      if (me.get('feed_id') == i.get('feed_id')) {
+        delNode = <div style={deleteStyle}>
+            <a onClick={clickDelete}>&times;</a>
+          </div>;
       }
 
       return (
@@ -62,15 +69,18 @@ const RawItem = React.createClass({
             <span style={urlStyle}>
             {i.get('profile').get('name')} - {i.get('short_url')} </span>
           </div>
-          <div style={deleteStyle}>
-            <a onClick={clickDelete}>&times;</a>
-          </div>
+          {delNode}
         </div>
       );
     }
 });
 
-const FeedItem = connect(null,
+const FeedItem = connect(
+  function mapStateToProps(state) {
+    return {
+      me: state.me
+    }
+  },
   function mapDispatchToProps(dispatch) {
     return {
       removeMark: (id) => dispatch(removeMark(id)),

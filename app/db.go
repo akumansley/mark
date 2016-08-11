@@ -77,7 +77,6 @@ func (db *DB) GetProfile(feedID string) (*Profile, error) {
 		return &Profile{}, nil
 	}
 	return &ps[0], nil
-
 }
 
 // SetProfile sets the current user's Profile

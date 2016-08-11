@@ -106,6 +106,7 @@ func (db *DB) applyOp(op feed.Op, fp string) {
 	datoms := op.Body.([]Datom)
 	entityIDs := make(map[string]bool)
 	for _, datom := range datoms {
+		datom.FeedID = fp
 		db.applyDatom(datom)
 		if datom.Added {
 			entityIDs[datom.EntityID] = true
@@ -251,8 +252,8 @@ func (db *DB) applyDatom(d Datom) {
 	if d.Added {
 		db.store.Set(d.EAVKey(), []byte(fmt.Sprintf("%v", d.Value)))
 		db.store.Set(d.AEVKey(), []byte(fmt.Sprintf("%v", d.Value)))
-		db.store.Set(d.AVEKey(), []byte(d.EntityID))
-		db.store.Set(d.VAEKey(), []byte(d.EntityID))
+		db.store.Set(d.AVEKey(), []byte(d.FeedID+":"+d.EntityID))
+		db.store.Set(d.VAEKey(), []byte(d.FeedID+":"+d.EntityID))
 	} else {
 		// be smarter here so we don't have to save the value on removal
 		db.store.Delete(d.EAVKey())
@@ -264,6 +265,7 @@ func (db *DB) applyDatom(d Datom) {
 
 func (db *DB) ensureSysKeys(entityID string, fp string) {
 	fd := Datom{
+		FeedID:    fp,
 		EntityID:  entityID,
 		Attribute: "db/FeedID",
 		Value:     fp,
@@ -271,9 +273,10 @@ func (db *DB) ensureSysKeys(entityID string, fp string) {
 	}
 	db.applyDatom(fd)
 	idd := Datom{
+		FeedID:    fp,
 		EntityID:  entityID,
 		Attribute: "db/ID",
-		Value:     entityID,
+		Value:     fp + ":" + entityID,
 		Added:     true,
 	}
 	db.applyDatom(idd)
@@ -317,7 +320,7 @@ func (db *DB) Get(id string, dst interface{}) error {
 
 	for k, v, err := i.Next(); err == nil; k, v, err = i.Next() {
 		components := bytes.Split(k, Separator)
-		// eav/123/user/name = Andrew
+		// eav/feed1:123/user/name = Andrew
 		attr := string(components[3])
 		field := reflect.ValueOf(entity).Elem().FieldByName(attr)
 		if field.IsValid() {
@@ -375,10 +378,20 @@ func (db *DB) Put(id string, src interface{}) error {
 	if err != nil {
 		return err
 	}
+	fp, err := feed.Fingerprint()
+	if err != nil {
+		return err
+	}
+	parts := strings.Split(id, ":")
+	if parts[0] != fp {
+		return errors.New("Can't add something not in your feed")
+	}
+	eid := parts[1]
 
 	var datoms []Datom
 	kd := Datom{
-		EntityID:  id,
+		FeedID:    fp,
+		EntityID:  eid,
 		Attribute: "db/Kind",
 		Value:     kind,
 		Added:     true,
@@ -396,7 +409,8 @@ func (db *DB) Put(id string, src interface{}) error {
 		attrName := kind + "/" + typeField.Name
 
 		d := Datom{
-			EntityID:  id,
+			FeedID:    fp,
+			EntityID:  eid,
 			Attribute: attrName,
 			Value:     valueField.Interface(),
 			Added:     true,
@@ -411,10 +425,6 @@ func (db *DB) Put(id string, src interface{}) error {
 	if err != nil {
 		return err
 	}
-	fp, err := feed.Fingerprint()
-	if err != nil {
-		return err
-	}
 	db.applyOp(op, fp)
 	db.announce(sf)
 	return nil
@@ -426,7 +436,16 @@ func (db *DB) Add(src interface{}) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	id := u.String()
+	eid := u.String()
+	feed, err := db.UserFeed()
+	if err != nil {
+		return "", err
+	}
+	fp, err := feed.Fingerprint()
+	if err != nil {
+		return "", err
+	}
+	id := fp + ":" + eid
 	err = db.Put(id, src)
 	return id, err
 }
@@ -443,15 +462,25 @@ func (db *DB) Remove(id string) error {
 	if err != nil {
 		return err
 	}
+	fp, err := feed.Fingerprint()
+	if err != nil {
+		return err
+	}
 
 	var datoms []Datom
+	parts := strings.Split(id, ":")
+	if parts[0] != fp {
+		return errors.New("Can't delete something not in your feed")
+	}
+	eid := parts[1]
 
 	for k, v, err := i.Next(); err == nil; k, v, err = i.Next() {
 		components := strings.Split(string(k), "/")
-		attr := components[2] + "/" + components[3]
+		attr := components[2] + "/" + components[3] // eav/feed:entity/kind/attr/value
 
 		d := Datom{
-			EntityID:  id,
+			FeedID:    fp,
+			EntityID:  eid,
 			Attribute: attr,
 			Value:     string(v),
 			Added:     false,
@@ -463,11 +492,6 @@ func (db *DB) Remove(id string) error {
 	feed.Append(op)
 
 	sf, err := db.PutUserFeed(feed)
-	if err != nil {
-		return err
-	}
-
-	fp, err := feed.Fingerprint()
 	if err != nil {
 		return err
 	}

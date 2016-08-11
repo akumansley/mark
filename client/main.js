@@ -30,6 +30,7 @@ const store = createStore(
 );
 
 const history = syncHistoryWithStore(browserHistory, store)
+store.dispatch(loadProfile());
 
 render(
   <Provider store={store}>

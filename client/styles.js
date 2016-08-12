@@ -1,6 +1,7 @@
 import Colors from "./colors";
 export default {
   input: {
+    color: Colors.secondaryText,
     border: "none",
     fontSize: "inherit",
     fontWeight: "300",

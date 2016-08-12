@@ -47,6 +47,13 @@ var moreStyle = {
 const deleteStyle = {
   padding: '4px 4px 4px 8px',
 }
+const linkButton = {
+  background: "none",
+  border: "none",
+  color: Colors.primaryText,
+  fontSize: "16px"  ,
+  cursor: "pointer",
+}
 
 const RawItem = React.createClass({
     render: function() {
@@ -58,7 +65,7 @@ const RawItem = React.createClass({
       let delNode = null;
       if (me.get('feed_id') == i.get('feed_id')) {
         delNode = <div style={deleteStyle}>
-            <a onClick={clickDelete}>&times;</a>
+            <button style={linkButton} onClick={clickDelete}>&times;</button>
           </div>;
       }
 
@@ -76,7 +83,7 @@ const RawItem = React.createClass({
 });
 
 const FeedItem = connect(
-  function mapStateToProps(state) {
+    function mapStateToProps(state) {
     return {
       me: state.me
     }

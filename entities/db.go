@@ -419,7 +419,7 @@ func (db *DB) Put(id string, src interface{}) error {
 	}
 
 	op := eavOp(datoms)
-	feed.Append(op)
+	feed.Append(op, db.key)
 
 	sf, err := db.PutUserFeed(feed)
 	if err != nil {
@@ -489,7 +489,7 @@ func (db *DB) Remove(id string) error {
 	}
 
 	op := eavOp(datoms)
-	feed.Append(op)
+	feed.Append(op, db.key)
 
 	sf, err := db.PutUserFeed(feed)
 	if err != nil {

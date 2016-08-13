@@ -3,9 +3,11 @@ package feed
 import (
 	"crypto"
 	"crypto/rsa"
+	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/square/go-jose"
@@ -31,22 +33,10 @@ func (c *Coder) RegisterOp(name string, cf Converter) {
 
 // Encode turns a feed into a signed feed; can only do this if you have the key to sign it
 func (c *Coder) Encode(f *Feed, key *rsa.PrivateKey) (SignedFeed, error) {
-	signer, err := jose.NewSigner(jose.RS256, key)
-	if err != nil {
-		return nil, err
-	}
 	var sf SignedFeed
 
 	for _, op := range f.Ops {
-		payload, err := op.MarshalJSON()
-		if err != nil {
-			return nil, err
-		}
-		jws, err := signer.Sign(payload)
-		if err != nil {
-			return nil, err
-		}
-		s, err := jws.CompactSerialize()
+		s, err := op.ToJWS(key)
 		if err != nil {
 			return nil, err
 		}
@@ -70,16 +60,22 @@ func base64URLDecode(data string) ([]byte, error) {
 	return base64.URLEncoding.DecodeString(data)
 }
 
+func contentHash(s string) string {
+	sha := sha256.Sum256([]byte(s))
+	out := make([]byte, base64.RawURLEncoding.EncodedLen(len(sha)))
+	base64.RawURLEncoding.Encode(out, sha[:])
+	return string(out)
+}
+
 // Decode turns a SignedFeed into a feed, verifying it along the way
 func (c *Coder) Decode(sf SignedFeed) (*Feed, error) {
-	// this might not always be in [0], but for now..
 	key, err := sf.CurrentKey()
 	if err != nil {
 		return nil, err
 	}
 
 	var f Feed
-	for _, s := range sf {
+	for i, s := range sf {
 		opJws, err := jose.ParseSigned(s)
 		if err != nil {
 			return nil, err
@@ -93,8 +89,17 @@ func (c *Coder) Decode(sf SignedFeed) (*Feed, error) {
 		if err != nil {
 			return nil, err
 		}
+
+		if i > 0 {
+			prev := sf[i-1]
+			if op.FeedHash != contentHash(prev) {
+				fmt.Printf("Verification failed for op %s\n", op)
+			}
+		}
+
 		op.DecodeBody(c.registry)
 		f.Ops = append(f.Ops, op)
+
 	}
 
 	return &f, nil
@@ -135,6 +140,35 @@ func (op *Op) DecodeBody(registry map[string]Converter) error {
 	body, err := registry[op.Op](op.RawBody)
 	op.Body = body
 	return err
+}
+
+// ToJWS turns an op into it's JWS representation
+func (op *Op) ToJWS(key *rsa.PrivateKey) (string, error) {
+	signer, err := jose.NewSigner(jose.RS256, key)
+	if err != nil {
+		return "", err
+	}
+	payload, err := op.MarshalJSON()
+	if err != nil {
+		return "", err
+	}
+	jws, err := signer.Sign(payload)
+	if err != nil {
+		return "", err
+	}
+	return jws.CompactSerialize()
+}
+
+// ContentHash retuns a sha256 of the JWS representation of an op
+func (op *Op) ContentHash(key *rsa.PrivateKey) (string, error) {
+	s, err := op.ToJWS(key)
+	if err != nil {
+		return "", err
+	}
+	sha := sha256.Sum256([]byte(s))
+	out := make([]byte, base64.RawURLEncoding.EncodedLen(len(sha)))
+	base64.RawURLEncoding.Encode(out, sha[:])
+	return string(out), nil
 }
 
 // Feed is a sequence of operations
@@ -195,9 +229,19 @@ func New(key *rsa.PrivateKey) (*Feed, error) {
 	return &feed, nil
 }
 
+// FeedHash returns a content hash of the current latest op
+func (feed *Feed) FeedHash(key *rsa.PrivateKey) (string, error) {
+	prev := feed.Ops[len(feed.Ops)-1]
+	return prev.ContentHash(key)
+}
+
 // Append adds an Op to the end of a feed
-func (feed *Feed) Append(op Op) error {
-	// op.FeedHash = feed.FeedHash()
+func (feed *Feed) Append(op Op, key *rsa.PrivateKey) error {
+	fh, err := feed.FeedHash(key)
+	if err != nil {
+		return err
+	}
+	op.FeedHash = fh
 	op.OpNum = feed.Ops[len(feed.Ops)-1].OpNum + 1
 	feed.Ops = append(feed.Ops, op)
 	return nil

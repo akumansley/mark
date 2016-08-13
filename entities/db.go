@@ -176,6 +176,23 @@ func (db *DB) PutUserFeed(f *feed.Feed) (feed.SignedFeed, error) {
 	return sf, db.PutFeed(sf)
 }
 
+// RebuildUserFeed recreates the user's feed from ops
+func (db *DB) RebuildUserFeed() error {
+	oldFeed, err := db.UserFeed()
+	if err != nil {
+		return err
+	}
+	newFeed, err := feed.New(db.key)
+	if err != nil {
+		return err
+	}
+	for _, op := range oldFeed.Ops {
+		newFeed.Append(op, db.key)
+	}
+	_, err = db.PutUserFeed(newFeed)
+	return err
+}
+
 // PutFeed sets a feed in the store
 func (db *DB) PutFeed(sf feed.SignedFeed) error {
 	fp, err := sf.Fingerprint()

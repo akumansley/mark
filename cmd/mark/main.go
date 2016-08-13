@@ -24,6 +24,7 @@ Usage:
   mark init [-d <dir>]
   mark serve [-d <dir>] [-p <port>] <url>
   mark dump [-d <dir>]
+  mark rebuild [-d <dir>]
 
 Options:
 	-d <dir>, --data-dir <dir>  Specify data directory [default: /var/opt/mark]
@@ -87,6 +88,13 @@ func dump(db *entities.DB) {
 	fmt.Printf("%s", db.Dump())
 }
 
+func rebuild(db *entities.DB) {
+	err := db.RebuildUserFeed()
+	if err != nil {
+		panic(err)
+	}
+}
+
 func serve(db *entities.DB, key *rsa.PrivateKey, port, url string) error {
 	self := feed.Pub{URL: url, LastUpdated: 0, LastChecked: 0}
 	bootstrap := feed.Pub{URL: bootstrapURL, LastUpdated: time.Now().Unix(), LastChecked: time.Now().Unix()}
@@ -137,6 +145,8 @@ func main() {
 			}
 		} else if args["dump"].(bool) {
 			dump(db)
+		} else if args["rebuild"].(bool) {
+			rebuild(db)
 		}
 	}
 }

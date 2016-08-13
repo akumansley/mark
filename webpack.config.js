@@ -10,7 +10,7 @@ module.exports = {
         loaders: [{
             test: /\.js$/,
             exclude: /node_modules/,
-            loaders: ['react-hot', 'babel?presets[]=es2015&presets[]=react'],
+            loaders: ['react-hot', 'babel?presets[]=es2015&presets[]=react&presets[]=stage-2'],
         },
         {
            test: /\.(png|jpg)$/,
@@ -27,25 +27,26 @@ module.exports = {
         favicon: "./client/assets/m.png",
     })],
     devServer: {
-        proxy: {
-            "/views/*": {
-                "target": {
-                    "host": "localhost",
-                    "port": 8081,
-                }
-            },
-            "/api/*": {
-                "target": {
-                    "host": "localhost",
-                    "port": 8081,
-                }
-            },
-            "/assets/*": {
-                "target": {
-                    "host": "localhost",
-                    "port": 8081,
-                }
-            }
-        }
+      historyApiFallback: true,
+      proxy: {
+          "/views/*": {
+              "target": {
+                  "host": "localhost",
+                  "port": 8081,
+              }
+          },
+          "/api/*": {
+              "target": {
+                  "host": "localhost",
+                  "port": 8081,
+              }
+          },
+          "/assets/*": {
+              "target": {
+                  "host": "localhost",
+                  "port": 8081,
+              }
+          }
+      }
     },
 };

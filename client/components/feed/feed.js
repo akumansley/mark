@@ -85,7 +85,7 @@ const RawItem = React.createClass({
 const FeedItem = connect(
     function mapStateToProps(state) {
     return {
-      me: state.me
+      me: state.me.item
     }
   },
   function mapDispatchToProps(dispatch) {

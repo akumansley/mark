@@ -7,6 +7,8 @@ import { Me } from './components/me/me'
 import { createStore, applyMiddleware, compose } from 'redux';
 import reducer from './reducer';
 import { fetchStream, loadProfile } from './actions';
+import {actions as meActions} from './resources';
+
 import { Provider } from 'react-redux';
 import thunkMiddleware from 'redux-thunk';
 
@@ -30,14 +32,14 @@ const store = createStore(
 );
 
 const history = syncHistoryWithStore(browserHistory, store)
-store.dispatch(loadProfile());
+store.dispatch(meActions.getMe());
 
 render(
   <Provider store={store}>
     <Router history={history}>
       <Route path="/" component={App}>
         <IndexRoute component={Feed} onEnter={() => store.dispatch(fetchStream(30, 0))}/>
-        <Route path="me" component={Me} onEnter={() => store.dispatch(loadProfile())}/>
+        <Route path="me" component={Me} onEnter={() => store.dispatch(meActions.getMe())}/>
       </Route>
     </Router>
   </Provider>,

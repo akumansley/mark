@@ -97,9 +97,12 @@ func (c *Coder) Decode(sf SignedFeed) (*Feed, error) {
 			}
 		}
 
+		if op.OpNum != i {
+			fmt.Printf("OpNum bad for %s\n", op)
+		}
+
 		op.DecodeBody(c.registry)
 		f.Ops = append(f.Ops, op)
-
 	}
 
 	return &f, nil

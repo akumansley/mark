@@ -25,7 +25,9 @@ export GOPATH=/home/vagrant
 # TODO uncomment these
 # npm install
 # npm run build
-# go get github.com/awans/mark/cmd/mark
+go get github.com/awans/mark/cmd/mark
+rm -rf /home/vagrant/src/github.com/awans/mark
+ln -s /opt/app /home/vagrant/src/github.com/awans/mark
 go build -o ./mark cmd/mark/main.go
 
 

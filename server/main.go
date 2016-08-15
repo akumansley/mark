@@ -1,7 +1,13 @@
 package server
 
 import (
+	"fmt"
+	"net"
 	"net/http"
+
+	"golang.org/x/net/context"
+	"zenhack.net/go/sandstorm/capnp/sandstormhttpbridge"
+	"zombiezen.com/go/capnproto2/rpc"
 
 	"github.com/NYTimes/gziphandler"
 	"github.com/PuerkitoBio/goquery"
@@ -29,6 +35,44 @@ func TitleHandler(w http.ResponseWriter, r *http.Request) {
 // IndexHandler serves index.html (ie the SPA)
 func IndexHandler(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "server/data/static/build/index.html")
+}
+
+// SandstormHandler reads session info from requests
+type SandstormHandler struct {
+	i http.Handler
+}
+
+func (s SandstormHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("HI")
+	// file, err := os.Open("/tmp/sandstorm-api")
+	// if err != nil {
+	// 	panic(err)
+	// }
+	conn, err := net.Dial("unix", "/tmp/sandstorm-api")
+	if err != nil {
+		panic(err)
+	}
+	transport := rpc.StreamTransport(conn)
+	ctx := context.Background()
+
+	clientConn := rpc.NewConn(transport)
+	defer clientConn.Close()
+
+	bridge := sandstormhttpbridge.SandstormHttpBridge{Client: clientConn.Bootstrap(ctx)}
+	fmt.Printf("bridge: %v\n", bridge)
+	call := bridge.GetSessionContext(ctx, func(p sandstormhttpbridge.SandstormHttpBridge_getSessionContext_Params) error {
+		p.SetId("0")
+		return nil
+	})
+	result, err := call.Struct()
+	fmt.Printf("result: %v\n", bridge)
+	if err != nil {
+		panic(err)
+	}
+	sc := result.Context()
+	fmt.Printf("%s\n", sc)
+	// call inner
+	s.i.ServeHTTP(w, r)
 }
 
 // New returns a new mark server
@@ -65,5 +109,6 @@ func New(db *app.DB) http.Handler {
 	r.HandleFunc("/{path:.*}", IndexHandler).Methods("GET")
 
 	gz := gziphandler.GzipHandler(r)
-	return gz
+	ss := SandstormHandler{i: gz}
+	return ss
 }

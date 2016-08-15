@@ -31,7 +31,7 @@ apt-get install -qq apt-transport-https
 
 echo 'deb https://deb.nodesource.com/node_4.x jessie main' > /etc/apt/sources.list.d/nodesource.list
 echo 'deb-src https://deb.nodesource.com/node_4.x jessie main' >> /etc/apt/sources.list.d/nodesource.list
-echo 'deb http://httpredir.debian.org/debian jessie-backports main' >> /etc/apt/sources.list.d/backports.list
+echo 'deb http://httpredir.debian.org/debian/ jessie-backports main' >> /etc/apt/sources.list.d/backports.list
 
 # Add nodesource's apt gpg key inline
 echo "

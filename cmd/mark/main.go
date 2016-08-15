@@ -4,16 +4,10 @@ import (
 	"crypto/rsa"
 	"fmt"
 	"log"
-	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"time"
-
-	"golang.org/x/net/context"
-	"zenhack.net/go/sandstorm/capnp/sandstormhttpbridge"
-
-	"zombiezen.com/go/capnproto2/rpc"
 
 	"github.com/awans/mark/app"
 	"github.com/awans/mark/entities"
@@ -31,7 +25,6 @@ Usage:
   mark serve [-d <dir>] [-p <port>] <url>
   mark dump [-d <dir>]
   mark rebuild [-d <dir>]
-	mark sandstorm
 
 Options:
 	-d <dir>, --data-dir <dir>  Specify data directory [default: /var/opt/mark]
@@ -102,31 +95,6 @@ func rebuild(db *entities.DB) {
 	}
 }
 
-func sandstorm() {
-	file := os.NewFile(3, "/tmp/sandstorm-api")
-	conn, err := net.FileConn(file)
-	if err != nil {
-		panic(err)
-	}
-	transport := rpc.StreamTransport(conn)
-	ctx := context.Background()
-
-	clientConn := rpc.NewConn(transport)
-	defer clientConn.Close()
-
-	bridge := sandstormhttpbridge.SandstormHttpBridge{Client: clientConn.Bootstrap(ctx)}
-	call := bridge.GetSessionContext(ctx, func(p sandstormhttpbridge.SandstormHttpBridge_getSessionContext_Params) error {
-		p.SetId("0")
-		return nil
-	})
-	result, err := call.Struct()
-	if err != nil {
-		panic(err)
-	}
-	sc := result.Context()
-	fmt.Printf("%s\n", sc)
-}
-
 func serve(db *entities.DB, key *rsa.PrivateKey, port, url string) error {
 	self := feed.Pub{URL: url, LastUpdated: 0, LastChecked: 0}
 	bootstrap := feed.Pub{URL: bootstrapURL, LastUpdated: time.Now().Unix(), LastChecked: time.Now().Unix()}
@@ -162,8 +130,6 @@ func main() {
 			log.Fatal(err)
 		}
 		os.Exit(0)
-	} else if args["sandstorm"].(bool) {
-		sandstorm()
 	} else {
 		key, db, err := openDbAndKeys(dir) // maybe wrap this in a Session
 		if err != nil {

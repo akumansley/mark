@@ -5,6 +5,7 @@
 bin/bash
 bin/ls
 bin/mkdir
+bin/rm
 etc/bash.bashrc
 etc/inputrc
 etc/ld.so.cache

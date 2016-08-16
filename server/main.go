@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"golang.org/x/net/context"
+	"zenhack.net/go/sandstorm/capnp/hacksession"
 	"zenhack.net/go/sandstorm/capnp/sandstormhttpbridge"
 	"zombiezen.com/go/capnproto2/rpc"
 
@@ -21,7 +22,6 @@ import (
 // TitleHandler returns the page title of a url
 func TitleHandler(w http.ResponseWriter, r *http.Request) {
 	url := r.URL.Query()["url"][0]
-
 	doc, err := goquery.NewDocument(url)
 	// TODO
 	if err != nil {
@@ -44,24 +44,20 @@ type SandstormHandler struct {
 
 func (s SandstormHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("HI")
-	// file, err := os.Open("/tmp/sandstorm-api")
-	// if err != nil {
-	// 	panic(err)
-	// }
+	sessionID := r.Header.Get("X-Sandstorm-Session-Id")
 	conn, err := net.Dial("unix", "/tmp/sandstorm-api")
 	if err != nil {
 		panic(err)
 	}
 	transport := rpc.StreamTransport(conn)
 	ctx := context.Background()
-
 	clientConn := rpc.NewConn(transport)
 	defer clientConn.Close()
 
 	bridge := sandstormhttpbridge.SandstormHttpBridge{Client: clientConn.Bootstrap(ctx)}
 	fmt.Printf("bridge: %v\n", bridge)
 	call := bridge.GetSessionContext(ctx, func(p sandstormhttpbridge.SandstormHttpBridge_getSessionContext_Params) error {
-		p.SetId("0")
+		p.SetId(sessionID)
 		return nil
 	})
 	result, err := call.Struct()
@@ -70,7 +66,18 @@ func (s SandstormHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 	sc := result.Context()
-	fmt.Printf("%s\n", sc)
+	hsc := hacksession.HackSessionContext{Client: sc.Client}
+	getCall := hsc.HttpGet(ctx, func(p hacksession.HackSessionContext_httpGet_Params) error {
+		p.SetUrl("http://www.google.com")
+		return nil
+	})
+	getResult, err := getCall.Struct()
+	if err != nil {
+		panic(err)
+	}
+	bytes, err := getResult.Content()
+
+	fmt.Printf("%s\n", bytes)
 	// call inner
 	s.i.ServeHTTP(w, r)
 }

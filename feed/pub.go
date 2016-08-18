@@ -1,7 +1,6 @@
 package feed
 
 import (
-	"bytes"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
@@ -74,7 +73,6 @@ func (p *Pub) GetPubs() ([]Pub, error) {
 	u, err := url.Parse(p.URL)
 	u.Path = path.Join(u.Path, ProtocolRoot, PubsPath)
 	s := u.String()
-
 	r, err := http.Get(s)
 	if err != nil {
 		return nil, err
@@ -90,14 +88,12 @@ func (p *Pub) GetFeed(feedID string) (*SignedFeed, error) {
 	u, err := url.Parse(p.URL)
 	u.Path = path.Join(u.Path, ProtocolRoot, FeedPath, feedID)
 	s := u.String()
-
 	r, err := http.Get(s)
 	if err != nil {
 		return nil, err
 	}
 	defer r.Body.Close()
 	var sf SignedFeed
-
 	err = json.NewDecoder(r.Body).Decode(&sf)
 	return &sf, err
 }
@@ -106,12 +102,10 @@ func (p *Pub) GetFeed(feedID string) (*SignedFeed, error) {
 func (p *Pub) Announce(a *Announcement) error {
 	u, err := url.Parse(p.URL)
 	u.Path = path.Join(u.Path, ProtocolRoot, AnnouncePath)
+	urlToAnnounce := a.Pub.URL
+	q := u.Query()
+	q.Set("url", urlToAnnounce)
 	s := u.String()
-	buf, err := json.Marshal(a)
-	if err != nil {
-		return err
-	}
-
-	_, err = http.Post(s, "application/json", bytes.NewBuffer(buf))
+	_, err = http.Get(s)
 	return err
 }

@@ -9,4 +9,3 @@ node_modules
 server/data/static/build
 npm-debug.log
 .tags
-mark

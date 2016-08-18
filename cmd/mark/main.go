@@ -99,12 +99,12 @@ func rebuild(db *entities.DB) {
 type HTTPGetter struct{}
 
 // Get implements Getter
-func (g HTTPGetter) Get(url string) (http.Response, error) {
-	return http.Get(url)
+func (g HTTPGetter) Get(url string) (*http.Response, error) {
+	res, err := http.Get(url)
+	return res, err
 }
 
 func serve(db *entities.DB, key *rsa.PrivateKey, port, url string) error {
-	feed.Initialize(&HTTPGetter{})
 	self := feed.Pub{URL: url, LastUpdated: 0, LastChecked: 0}
 	bootstrap := feed.Pub{URL: bootstrapURL, LastUpdated: time.Now().Unix(), LastChecked: time.Now().Unix()}
 
@@ -122,9 +122,12 @@ func serve(db *entities.DB, key *rsa.PrivateKey, port, url string) error {
 
 	appDB := app.NewDB(db)
 
+	// The server bootstraps a sandstorm getter
+	// so it has to be called *before* the app.Sync starts..
+	// Note that initial sync will block on the first request to hit the server
+	s := server.New(appDB)
 	app.Sync("10s", db)
 
-	s := server.New(appDB)
 	fmt.Printf("Now serving on :%s\n", port)
 	return http.ListenAndServe(":"+port, s)
 }

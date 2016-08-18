@@ -7,10 +7,10 @@ import (
 
 // Getter is an interface for a get-only http service
 type Getter interface {
-	Get(string) (http.Response, error)
+	Get(string) (*http.Response, error)
 }
 
-var once = sync.Once()
+var once sync.Once
 var instance Getter
 
 // Initialize sets up the http service with a getter implementation
@@ -23,7 +23,7 @@ func Initialize(getter Getter) {
 
 // Get executes an HTTP get
 // Calling Get before Initialize is an error
-func Get(url string) (http.Response, error) {
+func Get(url string) (*http.Response, error) {
 	if instance == nil {
 		panic("Calling Get before initialization")
 	}

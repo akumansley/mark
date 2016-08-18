@@ -22,7 +22,7 @@ func (a *AnnounceResource) GetAnnouncement(w http.ResponseWriter, r *http.Reques
 	announcedURL := r.URL.Query().Get("url")
 
 	go func() {
-		p := Pub{URL: announcedURL}
+		p := feed.Pub{URL: announcedURL}
 		a.db.PutPub(&p)
 		feeds, err := a.db.GetFeeds()
 		newPubs, newFeeds, err := feed.Sync([]feed.Pub{p}, feeds)

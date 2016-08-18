@@ -4,7 +4,6 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
-	"net/http"
 	"net/url"
 	"path"
 	"time"
@@ -58,7 +57,7 @@ func (p *Pub) GetHeads() ([]Head, error) {
 	u.Path = path.Join(u.Path, ProtocolRoot, HeadsPath)
 	s := u.String()
 
-	r, err := http.Get(s)
+	r, err := Get(s)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +72,7 @@ func (p *Pub) GetPubs() ([]Pub, error) {
 	u, err := url.Parse(p.URL)
 	u.Path = path.Join(u.Path, ProtocolRoot, PubsPath)
 	s := u.String()
-	r, err := http.Get(s)
+	r, err := Get(s)
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +87,7 @@ func (p *Pub) GetFeed(feedID string) (*SignedFeed, error) {
 	u, err := url.Parse(p.URL)
 	u.Path = path.Join(u.Path, ProtocolRoot, FeedPath, feedID)
 	s := u.String()
-	r, err := http.Get(s)
+	r, err := Get(s)
 	if err != nil {
 		return nil, err
 	}
@@ -106,6 +105,6 @@ func (p *Pub) Announce(a *Announcement) error {
 	q := u.Query()
 	q.Set("url", urlToAnnounce)
 	s := u.String()
-	_, err = http.Get(s)
+	_, err = Get(s)
 	return err
 }

@@ -95,7 +95,16 @@ func rebuild(db *entities.DB) {
 	}
 }
 
+// HTTPGetter implements Getter with the net/http package
+type HTTPGetter struct{}
+
+// Get implements Getter
+func (g HTTPGetter) Get(url string) (http.Response, error) {
+	return http.Get(url)
+}
+
 func serve(db *entities.DB, key *rsa.PrivateKey, port, url string) error {
+	feed.Initialize(&HTTPGetter{})
 	self := feed.Pub{URL: url, LastUpdated: 0, LastChecked: 0}
 	bootstrap := feed.Pub{URL: bootstrapURL, LastUpdated: time.Now().Unix(), LastChecked: time.Now().Unix()}
 

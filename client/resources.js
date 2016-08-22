@@ -8,6 +8,7 @@ export const {types, actions, reducers} = createResource({
   url: `${origin}/api/me/`,
   actions: {
     get: {
+      credentials: 'same-origin',
       transformResponse: (res) => {
         res.body = Immutable.fromJS(res.body);
         console.log(res);
@@ -15,6 +16,7 @@ export const {types, actions, reducers} = createResource({
       }
     },
     update: {
+      credentials: 'same-origin',
       method: "PUT"
     }
   }

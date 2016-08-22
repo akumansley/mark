@@ -20,8 +20,24 @@ func Sync(durationSpec string, db *entities.DB) error {
 		for t := range ticker.C {
 			fmt.Println("Syncing at", t)
 			feeds, err := db.GetFeeds()
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
 			pubs, err := db.GetPubs()
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
 			self, err := db.GetSelf()
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+			if self == nil {
+				fmt.Println("No self URL found; skipping a sync")
+				continue
+			}
 
 			var other []feed.Pub
 			for _, p := range pubs {

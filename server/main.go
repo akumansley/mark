@@ -6,7 +6,6 @@ import (
 	"github.com/NYTimes/gziphandler"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/awans/mark/app"
-	"github.com/awans/mark/feed"
 	"github.com/awans/mark/sandstorm"
 	"github.com/awans/mark/server/api"
 	"github.com/awans/mark/server/sync"
@@ -33,7 +32,7 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // New returns a new mark server
-func New(db *app.DB) http.Handler {
+func New(db *app.DB) (http.Handler, *sandstorm.SessionBus) {
 	r := mux.NewRouter()
 
 	apiRouter := r.PathPrefix("/api").Subrouter()
@@ -70,8 +69,6 @@ func New(db *app.DB) http.Handler {
 
 	// the sandstorm handler intercepts the sandstorm session ID and passes it to the Getter
 	// So background requests are made with the sessionID that "last touched" the app
-	ss, c := sandstorm.NewHandler(gz)
-	g := sandstorm.NewGetter(c)
-	feed.Initialize(g)
-	return ss
+	ss, bus := sandstorm.NewHandler(gz)
+	return ss, bus
 }

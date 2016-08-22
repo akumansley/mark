@@ -12,6 +12,7 @@ import (
 	"github.com/awans/mark/app"
 	"github.com/awans/mark/entities"
 	"github.com/awans/mark/feed"
+	"github.com/awans/mark/sandstorm"
 	"github.com/awans/mark/server"
 	"github.com/docopt/docopt-go"
 )
@@ -22,7 +23,7 @@ const usage = `mark
 
 Usage:
   mark init [-d <dir>]
-  mark serve [-d <dir>] [-p <port>] <url>
+  mark serve [-d <dir>] [-p <port>]
   mark dump [-d <dir>]
   mark rebuild [-d <dir>]
 
@@ -104,11 +105,8 @@ func (g HTTPGetter) Get(url string) (*http.Response, error) {
 	return res, err
 }
 
-func serve(db *entities.DB, key *rsa.PrivateKey, port, url string) error {
-	self := feed.Pub{URL: url, LastUpdated: 0, LastChecked: 0}
+func serve(db *entities.DB, key *rsa.PrivateKey, port string) error {
 	bootstrap := feed.Pub{URL: bootstrapURL, LastUpdated: time.Now().Unix(), LastChecked: time.Now().Unix()}
-
-	db.PutSelf(&self)
 	db.PutPub(&bootstrap)
 
 	// Catch ctrl-c and gracefully exit
@@ -125,7 +123,14 @@ func serve(db *entities.DB, key *rsa.PrivateKey, port, url string) error {
 	// The server bootstraps a sandstorm getter
 	// so it has to be called *before* the app.Sync starts..
 	// Note that initial sync will block on the first request to hit the server
-	s := server.New(appDB)
+	s, sessionBus := server.New(appDB)
+	g := sandstorm.NewGetter(sessionBus)
+	feed.Initialize(g)
+
+	go sandstorm.GetEndpointURL(db, sessionBus)
+
+	sessionBus.Sub()
+
 	app.Sync("10s", db)
 
 	fmt.Printf("Now serving on :%s\n", port)
@@ -149,9 +154,8 @@ func main() {
 		}
 		defer db.Close()
 		if args["serve"].(bool) {
-			url := args["<url>"].(string)
 			port := args["--port"].(string)
-			err = serve(db, key, port, url)
+			err = serve(db, key, port)
 			if err != nil {
 				log.Fatal(err)
 			}

@@ -37,7 +37,7 @@ export function fetchStream(count, offset) {
     dispatch(requestStream());
 
     let qs = "?count=" + encodeURIComponent(count) + "&offset=" + encodeURIComponent(offset);
-    return fetch('/api/stream' + qs)
+    return fetch('/api/stream' + qs, {credentials: 'same-origin'})
             .then(res => {
               if (res.status >= 400) {
                 throw new Error(res.status);
@@ -66,7 +66,9 @@ export function addMark(url, title) {
       return;
     }
 
-    return fetch('/api/bookmark', { method: "POST", body: JSON.stringify({
+    return fetch('/api/bookmark', { method: "POST",
+      credentials: 'same-origin', 
+      body: JSON.stringify({
         url: url,
         title: title
       })
@@ -96,7 +98,7 @@ export function removeMark(id) {
       dispatch(removeMarkFailed(new Error("Cannot delete null id")));
       return
     }
-    return fetch('/api/bookmark/' + id, { method: "DELETE"})
+    return fetch('/api/bookmark/' + id, { method: "DELETE",  credentials: 'same-origin'})
     .then(res => {
       if (res.status >= 400) {
         throw new Error(res.status);
@@ -124,7 +126,7 @@ export const updateTitle = createAction(UPDATE_TITLE);
 function loadTitleRaw(url) {
   return dispatch => {
     let qs = "?url=" + encodeURIComponent(url)
-    return fetch('/views/title' + qs)
+    return fetch('/views/title' + qs, {credentials: 'same-origin'})
     .then(res => {
       if (res.status >= 400) {
         throw new Error(res.status);

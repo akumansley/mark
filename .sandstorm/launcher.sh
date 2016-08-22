@@ -34,6 +34,6 @@ if ! [ -e /var/opt/mark ] ; then
   ./mark init -d /var/opt/mark
 fi
 
-./mark serve -d /var/opt/mark -p 8000 localhost:8000  # TODO: Don't pass a url in, get it from sandstorm
+./mark serve -d /var/opt/mark -p 8000
 
 exit 0

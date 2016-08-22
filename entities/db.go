@@ -255,7 +255,7 @@ func (db *DB) PutSelf(p *feed.Pub) error {
 func (db *DB) GetSelf() (*feed.Pub, error) {
 	pubK := NewKey("pub", "self")
 	bytes, err := db.store.Get(pubK.ToBytes())
-	if err != nil {
+	if err != nil || len(bytes) == 0 {
 		return nil, err
 	}
 	var pub feed.Pub
@@ -522,6 +522,10 @@ func (db *DB) announce(f feed.SignedFeed) error {
 	self, err := db.GetSelf()
 	if err != nil {
 		return err
+	}
+	if self == nil {
+		// TODO, can we queue these and release them later?
+		return errors.New("No self Pub found")
 	}
 	pubs, err := db.GetPubs()
 	if err != nil {

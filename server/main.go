@@ -46,6 +46,9 @@ func New(db *app.DB) (http.Handler, *sandstorm.SessionBus) {
 	me := api.NewMe(db)
 	apiRouter.HandleFunc("/me", me.GetProfile).Methods("GET")
 	apiRouter.HandleFunc("/me", me.PutProfile).Methods("PUT")
+	self := api.NewSelf(db)
+	apiRouter.HandleFunc("/self", self.GetSelf).Methods("GET")
+	apiRouter.HandleFunc("/self", self.PutSelf).Methods("PUT")
 
 	viewsRouter := r.PathPrefix("/views").Subrouter()
 	viewsRouter.HandleFunc("/title", TitleHandler).Methods("GET")

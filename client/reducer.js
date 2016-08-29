@@ -1,7 +1,7 @@
 import { List, Map } from 'immutable';
 import { combineReducers } from 'redux';
 import { routerReducer } from 'react-router-redux'
-import {reducers as meReducers} from './resources';
+import {reducers as meReducers} from './resources/me';
 
 
 const initBookmarks = Map({
@@ -102,13 +102,23 @@ function title(state="", action) {
 //   }
 // }
 
+function self(state=Map({}), action) {
+  switch (action.type) {
+    case "GET_SELF_SUCCESS":
+      return action.payload;
+    default:
+      return state;
+  }
+}
+
 const reducer = combineReducers({
   bookmarks,
   showTitle,
   url,
   title,
+  self,
   me: meReducers,
-  routing: routerReducer
+  routing: routerReducer,
 });
 
 export default reducer;

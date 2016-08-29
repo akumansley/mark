@@ -34,7 +34,11 @@ Options:
 `
 
 func initFeed(markDir string) error {
-	err := os.MkdirAll(markDir, 0777)
+	err := os.RemoveAll(markDir)
+	if err != nil {
+		return err
+	}
+	err = os.MkdirAll(markDir, 0777)
 	if err != nil {
 		return err
 	}

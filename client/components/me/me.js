@@ -4,7 +4,7 @@ import Colors from '../../colors';
 import Styles from '../../styles';
 import { connect } from 'react-redux';
 import { Add } from '../add/add';
-import { actions as meActions } from '../../resources'
+import { actions as meActions } from '../../resources/me'
 import {bindActionCreators} from 'redux'
 
 

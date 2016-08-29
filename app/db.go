@@ -98,6 +98,16 @@ func (db *DB) PutPub(p *feed.Pub) error {
 	return db.e.PutPub(p)
 }
 
+// GetSelf returns the pub that represents this node
+func (db *DB) GetSelf() (*feed.Pub, error) {
+	return db.e.GetSelf()
+}
+
+// PutSelf updates the pub that represents this node
+func (db *DB) PutSelf(p *feed.Pub) error {
+	return db.e.PutSelf(p)
+}
+
 // GetFeeds returns all feeds
 func (db *DB) GetFeeds() ([]feed.SignedFeed, error) {
 	return db.e.GetFeeds()

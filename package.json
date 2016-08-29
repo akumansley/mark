@@ -39,6 +39,7 @@
     "redux": "~3.5.2",
     "redux-action": "~1.0.0",
     "redux-actions": "~0.10.1",
+    "redux-promise-middleware": "^4.0.0",
     "redux-rest-resource": "^0.6.0",
     "redux-thunk": "~2.1.0",
     "reselect": "~2.5.3",

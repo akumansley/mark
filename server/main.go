@@ -6,6 +6,7 @@ import (
 	"github.com/NYTimes/gziphandler"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/awans/mark/app"
+	"github.com/awans/mark/feed"
 	"github.com/awans/mark/sandstorm"
 	"github.com/awans/mark/server/api"
 	"github.com/awans/mark/server/sync"
@@ -16,8 +17,14 @@ import (
 // TitleHandler returns the page title of a url
 func TitleHandler(w http.ResponseWriter, r *http.Request) {
 	url := r.URL.Query()["url"][0]
-	doc, err := goquery.NewDocument(url)
-	// TODO
+	res, err := feed.Get(url)
+	if err != nil {
+		panic(err)
+	}
+	defer res.Body.Close()
+
+	// use utfBody using goquery
+	doc, err := goquery.NewDocumentFromReader(res.Body)
 	if err != nil {
 		panic(err)
 	}

@@ -2,14 +2,10 @@ package sandstorm
 
 import (
 	"bytes"
-	"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"sync"
-
-	"github.com/awans/mark/entities"
-	"github.com/awans/mark/feed"
 
 	"golang.org/x/net/context"
 	"zenhack.net/go/sandstorm/capnp/hacksession"
@@ -137,71 +133,4 @@ func (s Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	sessionID := r.Header.Get("X-Sandstorm-Session-Id")
 	s.b.Pub(sessionID)
 	s.i.ServeHTTP(w, r)
-}
-
-// GetEndpointURL will, if it hasn't already been done
-// ask sandstorm for an endpoint URL and save it
-// in the DB
-func GetEndpointURL(db *entities.DB, bus *SessionBus) {
-	self, err := db.GetSelf()
-	if self != nil {
-		fmt.Printf("Got Pub URL %s\n", self.URL)
-		return
-	}
-	if err != nil || self == nil {
-		// we don't know where we are on the internet, so let's do it!
-		c := bus.Sub()
-		// block on a session
-		fmt.Println("Blocking on sessionID")
-		sessionID := <-c
-		fmt.Printf("sessionID %s\n", sessionID)
-		conn, err := net.Dial("unix", "/tmp/sandstorm-api")
-		if err != nil {
-			fmt.Printf("Error getting endpoint URL: %s\n", err)
-			return
-		}
-		transport := rpc.StreamTransport(conn)
-		ctx := context.Background()
-		clientConn := rpc.NewConn(transport)
-		defer clientConn.Close()
-
-		bridge := sandstormhttpbridge.SandstormHttpBridge{Client: clientConn.Bootstrap(ctx)}
-		call := bridge.GetSessionContext(ctx, func(p sandstormhttpbridge.SandstormHttpBridge_getSessionContext_Params) error {
-			p.SetId(sessionID)
-			return nil
-		})
-		result, err := call.Struct()
-		if err != nil {
-			fmt.Printf("Error getting endpoint URL: %s\n", err)
-			return
-		}
-		sc := result.Context()
-		hsc := hacksession.HackSessionContext{Client: sc.Client}
-		apiTokenCall := hsc.GenerateApiToken(ctx, func(p hacksession.HackSessionContext_generateApiToken_Params) error {
-			// 	generateApiToken @3 (petname :Text, userInfo :Grain.UserInfo, expires :UInt64 = 0)
-			//  -> (token :Text, endpointUrl :Text, tokenId :Text);
-			p.SetPetname("Mark API") // what's this even do
-			return nil
-		})
-		tokenResult, err := apiTokenCall.Struct()
-		if err != nil {
-			fmt.Printf("Error getting endpoint URL: %s\n", err)
-			return
-		}
-		token, err := tokenResult.Token()
-		if err != nil {
-			fmt.Printf("Error getting endpoint URL: %s\n", err)
-			return
-		}
-		url, err := tokenResult.EndpointUrl()
-		if err != nil {
-			fmt.Printf("Error getting endpoint URL: %s\n", err)
-			return
-		}
-		// this convention is respected in Sync
-		pubURL := url + "#" + token
-		fmt.Println("Got Pub URL %s", pubURL)
-		self := feed.Pub{URL: pubURL, LastUpdated: 0, LastChecked: 0}
-		db.PutSelf(&self)
-	}
 }

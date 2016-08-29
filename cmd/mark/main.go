@@ -131,8 +131,6 @@ func serve(db *entities.DB, key *rsa.PrivateKey, port string) error {
 	g := sandstorm.NewGetter(sessionBus)
 	feed.Initialize(g)
 
-	go sandstorm.GetEndpointURL(db, sessionBus)
-
 	sessionBus.Sub()
 
 	app.Sync("10s", db)

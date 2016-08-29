@@ -11,7 +11,7 @@ import {StyleRoot} from 'radium';
 import { createStore, applyMiddleware, compose } from 'redux';
 import reducer from './reducer';
 import { fetchStream, loadProfile } from './actions';
-import {actions as meActions} from './resources/me';
+import meActions from './resources/me';
 
 import { Provider } from 'react-redux';
 import thunkMiddleware from 'redux-thunk';

@@ -1,7 +1,6 @@
 import { List, Map } from 'immutable';
 import { combineReducers } from 'redux';
 import { routerReducer } from 'react-router-redux'
-import {reducers as meReducers} from './resources/me';
 
 
 const initBookmarks = Map({
@@ -89,18 +88,16 @@ function title(state="", action) {
   }
 }
 
-// function me(state=Map({}), action) {
-//   switch (action.type) {
-//     case 'LOAD_PROFILE_SUCCESS':
-//       return action.payload;
-//     case 'UPDATE_PROFILE_SUCCESS':
-//       return action.payload;
-//     case 'UPDATE_NAME':
-//       return state.set('name', action.payload)
-//     default:
-//       return state
-//   }
-// }
+function me(state=Map({}), action) {
+  switch (action.type) {
+    case 'FETCH_ME_SUCCESS':
+      return action.payload;
+    case 'UPDATE_ME_SUCCESS':
+      return action.payload;
+    default:
+      return state
+  }
+}
 
 function self(state=Map({}), action) {
   switch (action.type) {
@@ -119,7 +116,7 @@ const reducer = combineReducers({
   url,
   title,
   self,
-  me: meReducers,
+  me,
   routing: routerReducer,
 });
 

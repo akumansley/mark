@@ -4,7 +4,7 @@ import Colors from '../../colors';
 import Styles from '../../styles';
 import { connect } from 'react-redux';
 import { Add } from '../add/add';
-import { actions as meActions } from '../../resources/me'
+import meActions from '../../resources/me'
 import {bindActionCreators} from 'redux'
 
 
@@ -60,7 +60,7 @@ const Styled = Radium(Component)
 
 const Connected = connect(
   function mapStateToProps(state) {
-    return { me: state.me.item }
+    return { me: state.me }
   },
   function mapDispatchToProps(dispatch) {
     return {

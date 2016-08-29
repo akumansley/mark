@@ -85,7 +85,7 @@ const RawItem = React.createClass({
 const FeedItem = connect(
     function mapStateToProps(state) {
     return {
-      me: state.me.item
+      me: state.me
     }
   },
   function mapDispatchToProps(dispatch) {
@@ -145,7 +145,8 @@ const Component = React.createClass({
 const Styled = Radium(Component)
 
 const selectItems = state => state.bookmarks.get('items');
-const sortItems = createSelector([selectItems], items => items.valueSeq().sortBy(v => -1 * v.get('created_at')).toList());
+const sortItems = createSelector([selectItems],
+  items => items.valueSeq().sortBy(v => -1 * v.get('created_at')).toList());
 
 function shortUrl(url) {
   const u = new URL(url);

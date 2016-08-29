@@ -106,6 +106,8 @@ function self(state=Map({}), action) {
   switch (action.type) {
     case "GET_SELF_SUCCESS":
       return action.payload;
+    case "PUT_SELF_SUCCESS":
+      return action.payload;
     default:
       return state;
   }

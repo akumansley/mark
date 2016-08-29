@@ -3,6 +3,9 @@ import { Link, IndexLink } from 'react-router'
 import Styles from '../../styles';
 import Radium from 'radium';
 const m = require('../../assets/m.png')
+import { push } from 'react-router-redux'
+import {connect} from 'react-redux';
+
 
 const imgStyle = {
   width: 30,
@@ -28,9 +31,56 @@ function requestIframeURL() {
    }}, "*");
  }
 
+ var copyIframeURLToElement = function(event) {
+  if (event.data.rpcId === "0") {
+    if (event.data.error) {
+      console.log("ERROR: " + event.data.error);
+    } else {
+      var el = document.getElementById("offer-iframe");
+      el.setAttribute("src", event.data.uri);
+    }
+  }
+};
+
+const inputStyles = Object.assign({
+  width: "100%",
+}, Styles.input)
+
+function putSelf(url) {
+  return dispatch => {
+    fetch(
+      "/api/self",
+      {
+        credentials: 'same-origin',
+        method: 'PUT',
+        body: JSON.stringify({
+          url: url,
+        }),
+      }
+    ).then(
+      res => res.json()
+    ).then(
+      data => {
+        dispatch({type: "PUT_SELF_SUCCESS", payload: data})
+        dispatch(push('/'));
+      },
+      err => {
+        dispatch({type: "PUT_SELF_FAILED", payload: err});
+      }
+    )
+  }
+}
+
 
 class Component extends React.Component {
   render() {
+    const {putSelf} = this.props;
+
+    const submit = evt => {
+      const url = this.urlInput.value;
+      putSelf(url);
+    }
+
     return (
       <div>
         <img src={m} style={imgStyle}/>
@@ -41,21 +91,31 @@ class Component extends React.Component {
           <li>Mark can't be bought, closed or shut down, or show ads</li>
           <li>Deleting a bookmark hides it, but people can still find it if they go looking</li>
         </ul>
-        <p><strong>Here's the address of your Mark server:</strong></p>
-        {/* <input type="text" /> */}
+        <p><strong>This is the address of your Mark server</strong></p>
         <iframe style={offerIframeStyle} id="offer-iframe"></iframe>
         <p><strong>Copy and paste it here to get started:</strong></p>
 
-        <input key="title" style={Styles.input} placeholder="http://.." type="text"></input>
+        <input key="url"
+          ref={el => this.urlInput = el}
+          style={inputStyles}
+          placeholder="http://.."
+          type="text">
+        </input>
 
-        <button style={Styles.actionButton}>OK</button>
+        <button onClick={submit} style={Styles.actionButton}>OK</button>
       </div>
     )
   }
   componentWillMount() {
     requestIframeURL();
+    window.addEventListener("message", copyIframeURLToElement);
   }
 }
 
-
-export const FirstRun = Component;
+export const FirstRun = connect(null, function mapDispatchToProps(dispatch) {
+    return {
+        putSelf: (url) => {
+            dispatch(putSelf(url))
+        },
+    }
+})(Component);

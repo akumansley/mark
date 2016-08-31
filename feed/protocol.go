@@ -1,6 +1,7 @@
 package feed
 
 import (
+	"fmt"
 	"log"
 	"time"
 )
@@ -111,6 +112,7 @@ func Sync(pubs []Pub, feeds []SignedFeed) ([]Pub, []SignedFeed, error) {
 
 // Announce tells your known pubs about some update to a feed
 func Announce(self *Pub, pubs []Pub, f SignedFeed) error {
+	fmt.Printf("Gonna announce myself: %s\n", self.URL)
 	fp, err := f.Fingerprint()
 	if err != nil {
 		panic(err)

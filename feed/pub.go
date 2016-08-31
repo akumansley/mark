@@ -105,6 +105,7 @@ func (p *Pub) Announce(a *Announcement) error {
 	urlToAnnounce := a.Pub.URL
 	q := u.Query()
 	q.Set("url", urlToAnnounce)
+	u.RawQuery = q.Encode()
 	s := u.String()
 	fmt.Printf("Announcing to: %s\n", s)
 	_, err = Get(s)

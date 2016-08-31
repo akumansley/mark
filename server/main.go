@@ -2,6 +2,7 @@ package server
 
 import (
 	"net/http"
+	"os"
 
 	"github.com/NYTimes/gziphandler"
 	"github.com/PuerkitoBio/goquery"
@@ -77,8 +78,11 @@ func New(db *app.DB) (http.Handler, *sandstorm.SessionBus) {
 
 	gz := gziphandler.GzipHandler(r)
 
-	// the sandstorm handler intercepts the sandstorm session ID and passes it to the Getter
-	// So background requests are made with the sessionID that "last touched" the app
-	ss, bus := sandstorm.NewHandler(gz)
-	return ss, bus
+	if os.Getenv("SANDSTORM") == "1" {
+		// the sandstorm handler intercepts the sandstorm session ID and passes it to the Getter
+		// So background requests are made with the sessionID that "last touched" the app
+		ss, bus := sandstorm.NewHandler(gz)
+		return ss, bus
+	}
+	return gz, nil
 }

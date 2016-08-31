@@ -2,6 +2,7 @@ package sandstorm
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -130,6 +131,7 @@ func NewHandler(inner http.Handler) (http.Handler, *SessionBus) {
 }
 
 func (s Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	fmt.Printf("GET: %s\n", r.URL)
 	sessionID := r.Header.Get("X-Sandstorm-Session-Id")
 	s.b.Pub(sessionID)
 	s.i.ServeHTTP(w, r)

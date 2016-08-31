@@ -1,4 +1,3 @@
-import {createResource} from 'redux-rest-resource';
 import Immutable from 'immutable';
 
 const origin = window.location.origin;

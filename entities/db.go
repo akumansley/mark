@@ -532,7 +532,8 @@ func (db *DB) announce(f feed.SignedFeed) error {
 		return err
 	}
 
-	return feed.Announce(self, pubs, f)
+	go feed.Announce(self, pubs, f)
+	return nil
 }
 
 // Dump returns every key and value in the db

@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"net/url"
 	"path"
 	"time"
@@ -105,6 +106,7 @@ func (p *Pub) Announce(a *Announcement) error {
 	q := u.Query()
 	q.Set("url", urlToAnnounce)
 	s := u.String()
+	fmt.Printf("Announcing to: %s\n", s)
 	_, err = Get(s)
 	return err
 }

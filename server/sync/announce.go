@@ -1,6 +1,7 @@
 package sync
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/awans/mark/app"
@@ -20,6 +21,7 @@ func NewAnnounceResource(db *app.DB) *AnnounceResource {
 // GetAnnouncement accepts updates to pubs
 func (a *AnnounceResource) GetAnnouncement(w http.ResponseWriter, r *http.Request) {
 	announcedURL := r.URL.Query().Get("url")
+	fmt.Printf("Got announcement from: %s\n", announcedURL)
 
 	go func() {
 		p := feed.Pub{URL: announcedURL}

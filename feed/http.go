@@ -42,7 +42,7 @@ func Get(requestedURL string) (*http.Response, error) {
 		// we have to drop "sync" from the path as sandstorm will add it automatically
 		// as a defense mechanism
 		p := u.EscapedPath()
-		newPath := strings.Replace(p, "/sync", "/", -1)
+		newPath := strings.Replace(p, "/sync", "", -1)
 		u.Path = newPath
 		if u.Scheme == "" {
 			u.Scheme = "https" // be optimistic

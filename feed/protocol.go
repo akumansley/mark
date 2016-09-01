@@ -66,23 +66,29 @@ func Sync(pubs []Pub, feeds []SignedFeed) ([]Pub, []SignedFeed, error) {
 
 			for _, head := range heads {
 				// do we have this feed at all
-				if f, ok := feedsByID[head.ID]; ok {
+				if pl, ok := feedPubs[head.ID]; ok {
+					best := pl.Len
+					if head.Len > best {
+						fmt.Printf("Sync: updated feed %s - %s\n", head.ID, head.Len)
+						feedPubs[head.ID] = pubLen{Pub: pub, Len: head.Len}
+					}
+				} else if f, ok := feedsByID[head.ID]; ok {
 					fp, err := f.Fingerprint()
 					if err != nil {
 						return nil, nil, err
 					}
 					// best so far
 					best := len(f)
-					if pl, ok := feedPubs[string(fp)]; ok {
-						best = pl.Len
-					}
+
 					// is theirs better
 					if head.Len > best {
+						fmt.Printf("Sync: updated feed %s - %s\n", head.ID, head.Len)
 						feedPubs[string(fp)] = pubLen{Pub: pub, Len: head.Len}
 					}
 				} else {
 					// we didn't have this feed, so add it
 					feedPubs[head.ID] = pubLen{Pub: pub, Len: head.Len}
+					fmt.Printf("Sync: new feed %s\n", head.ID)
 				}
 			}
 		}
@@ -94,6 +100,7 @@ func Sync(pubs []Pub, feeds []SignedFeed) ([]Pub, []SignedFeed, error) {
 		pub := pl.Pub
 		pub.LastUpdated = time.Now().Unix()
 		feed, err := pub.GetFeed(fp)
+		fmt.Printf("Sync loaded feed: %s %s\n", fp, pub.URL)
 		if err != nil {
 			log.Println(err)
 			continue

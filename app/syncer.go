@@ -48,17 +48,27 @@ func Sync(durationSpec string, db *entities.DB) error {
 
 			newPubs, newFeeds, err := feed.Sync(other, feeds)
 			if err != nil {
+				fmt.Println(err)
 				continue
 			}
 			for _, f := range newFeeds {
-				db.PutFeed(f)
+				err = db.PutFeed(f)
+				if err != nil {
+					fmt.Println(err)
+				}
 			}
 			// update old pubs too to track failures and backoff
 			for _, p := range other {
-				db.PutPub(&p)
+				err = db.PutPub(&p)
+				if err != nil {
+					fmt.Println(err)
+				}
 			}
 			for _, p := range newPubs {
-				db.PutPub(&p)
+				err = db.PutPub(&p)
+				if err != nil {
+					fmt.Println(err)
+				}
 			}
 		}
 	}()

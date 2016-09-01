@@ -8,7 +8,7 @@ import (
 	"github.com/awans/mark/feed"
 )
 
-// Heads exposes the head of each feed
+// HeadsResource exposes the head of each feed
 type HeadsResource struct {
 	db *app.DB
 }
@@ -31,7 +31,7 @@ func (h *HeadsResource) GetHeads(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			panic(err)
 		}
-		heads = append(heads, feed.Head{ID: string(fp), Len: len(f)})
+		heads = append(heads, feed.Head{ID: fp, Len: len(f)})
 	}
 
 	bytes, err := json.Marshal(heads)

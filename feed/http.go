@@ -1,6 +1,7 @@
 package feed
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -50,5 +51,6 @@ func Get(requestedURL string) (*http.Response, error) {
 
 		requestedURL = u.String()
 	}
+	fmt.Printf("Fetching: %s\n", requestedURL)
 	return instance.Get(requestedURL)
 }

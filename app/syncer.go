@@ -16,7 +16,7 @@ func Sync(durationSpec string, db *entities.DB) error {
 		return err
 	}
 	ticker := time.NewTicker(duration)
-	go func() {
+	go func(db *entities.DB) {
 		for t := range ticker.C {
 			fmt.Println("Syncing at", t)
 			feeds, err := db.GetFeeds()
@@ -71,6 +71,6 @@ func Sync(durationSpec string, db *entities.DB) error {
 				}
 			}
 		}
-	}()
+	}(db)
 	return nil
 }

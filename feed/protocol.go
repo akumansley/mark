@@ -2,7 +2,6 @@ package feed
 
 import (
 	"fmt"
-	"log"
 	"time"
 )
 
@@ -32,7 +31,8 @@ func Sync(pubs []Pub, feeds []SignedFeed) ([]Pub, []SignedFeed, error) {
 		if err != nil {
 			return nil, nil, err
 		}
-		feedsByID[string(fp)] = feed
+		feedsByID[fp] = feed
+		fmt.Printf("Sync: have feed %s\n", fp)
 	}
 
 	feedPubs := make(map[string]pubLen)
@@ -44,7 +44,7 @@ func Sync(pubs []Pub, feeds []SignedFeed) ([]Pub, []SignedFeed, error) {
 			pub.LastChecked = time.Now().Unix()
 			pubsToAdd, err := pub.GetPubs()
 			if err != nil {
-				log.Println(err)
+				fmt.Println(err)
 				pub.Failures++
 				continue
 			}
@@ -59,7 +59,7 @@ func Sync(pubs []Pub, feeds []SignedFeed) ([]Pub, []SignedFeed, error) {
 
 			heads, err := pub.GetHeads()
 			if err != nil {
-				log.Println(err)
+				fmt.Println(err)
 				pub.Failures++
 				continue
 			}
@@ -83,7 +83,7 @@ func Sync(pubs []Pub, feeds []SignedFeed) ([]Pub, []SignedFeed, error) {
 					// is theirs better
 					if head.Len > best {
 						fmt.Printf("Sync: updated feed %s - %s\n", head.ID, head.Len)
-						feedPubs[string(fp)] = pubLen{Pub: pub, Len: head.Len}
+						feedPubs[fp] = pubLen{Pub: pub, Len: head.Len}
 					}
 				} else {
 					// we didn't have this feed, so add it
@@ -100,9 +100,14 @@ func Sync(pubs []Pub, feeds []SignedFeed) ([]Pub, []SignedFeed, error) {
 		pub := pl.Pub
 		pub.LastUpdated = time.Now().Unix()
 		feed, err := pub.GetFeed(fp)
+		fetchedFp, err := feed.Fingerprint()
+		if fp != fetchedFp {
+			fmt.Printf("Fingerprint mismatch: head.ID:%s FP:%s\n", fp, fetchedFp)
+			continue
+		}
 		fmt.Printf("Sync loaded feed: %s %s\n", fp, pub.URL)
 		if err != nil {
-			log.Println(err)
+			fmt.Println(err)
 			continue
 		}
 		outFeeds = append(outFeeds, *feed)
@@ -124,7 +129,7 @@ func Announce(self *Pub, pubs []Pub, f SignedFeed) error {
 	if err != nil {
 		panic(err)
 	}
-	head := Head{ID: string(fp), Len: len(f)}
+	head := Head{ID: fp, Len: len(f)}
 
 	a := Announcement{Pub: *self, Heads: []Head{head}}
 	for _, p := range pubs {

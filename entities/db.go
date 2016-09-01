@@ -196,6 +196,7 @@ func (db *DB) RebuildUserFeed() error {
 // PutFeed sets a feed in the store
 func (db *DB) PutFeed(sf feed.SignedFeed) error {
 	fp, err := sf.Fingerprint()
+	fmt.Printf("PutFeed: %s\n", fp)
 	if err != nil {
 		return err
 	}

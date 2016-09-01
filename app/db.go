@@ -57,7 +57,7 @@ func (db *DB) GetUserProfile() (*Profile, error) {
 	}
 
 	var ps []Profile
-	db.e.NewQuery("Profile").Filter("FeedID =", string(fp)).GetAll(&ps)
+	db.e.NewQuery("Profile").Filter("FeedID =", fp).GetAll(&ps)
 	var p *Profile
 	if len(ps) == 0 {
 		p = &Profile{}

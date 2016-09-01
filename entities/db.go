@@ -139,7 +139,7 @@ func (db *DB) GetFeeds() ([]feed.SignedFeed, error) {
 
 // GetFeed returns a single SignedFeed by id
 func (db *DB) GetFeed(id string) (feed.SignedFeed, error) {
-	feedK := NewKey("feed", string(db.fp))
+	feedK := NewKey("feed", id)
 	feedBytes, err := db.store.Get(feedK.ToBytes())
 	if err != nil {
 		return nil, err

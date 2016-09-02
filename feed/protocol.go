@@ -32,15 +32,21 @@ func Sync(pubs []Pub, feeds []SignedFeed) ([]Pub, []SignedFeed, error) {
 			return nil, nil, err
 		}
 		feedsByID[fp] = feed
-		fmt.Printf("Sync: have feed %s\n", fp)
 	}
 
 	feedPubs := make(map[string]pubLen)
+	existingPubsByURL := make(map[string]Pub)
+	for _, p := range pubs {
+		key := string(p.URLHash())
+		existingPubsByURL[key] = p
+	}
 	pubsByURL := make(map[string]Pub)
 
 	for i := range pubs {
 		pub := &pubs[i]
 		if pub.ShouldUpdate() {
+			fmt.Printf("Updating %s - times: %v %v %v\n", pub.URL, time.Now().Unix(),
+				pub.LastUpdated, pub.LastChecked)
 			pub.LastChecked = time.Now().Unix()
 			pubsToAdd, err := pub.GetPubs()
 			if err != nil {
@@ -52,8 +58,10 @@ func Sync(pubs []Pub, feeds []SignedFeed) ([]Pub, []SignedFeed, error) {
 
 			for _, pubToAdd := range pubsToAdd {
 				key := string(pubToAdd.URLHash())
-				if _, ok := pubsByURL[key]; !ok {
-					pubsByURL[key] = pubToAdd
+				if _, ok := existingPubsByURL[key]; !ok {
+					if _, ok := pubsByURL[key]; !ok {
+						pubsByURL[key] = pubToAdd
+					}
 				}
 			}
 
@@ -116,6 +124,7 @@ func Sync(pubs []Pub, feeds []SignedFeed) ([]Pub, []SignedFeed, error) {
 	// save off any new friends
 	var outPubs []Pub
 	for _, p := range pubsByURL {
+		p.LastUpdated = time.Now().Unix()
 		outPubs = append(outPubs, p)
 	}
 

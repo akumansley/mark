@@ -9,6 +9,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/awans/mark/feed"
 	"github.com/nu7hatch/gouuid"
@@ -196,7 +197,6 @@ func (db *DB) RebuildUserFeed() error {
 // PutFeed sets a feed in the store
 func (db *DB) PutFeed(sf feed.SignedFeed) error {
 	fp, err := sf.Fingerprint()
-	fmt.Printf("PutFeed: %s\n", fp)
 	if err != nil {
 		return err
 	}
@@ -224,6 +224,11 @@ func (db *DB) GetPubs() ([]feed.Pub, error) {
 		err = json.Unmarshal(v, &pub)
 		if err != nil {
 			return nil, err
+		}
+		// fixup bad data
+		if pub.LastUpdated == 0 {
+			pub.LastUpdated = time.Now().Unix()
+			db.PutPub(&pub)
 		}
 		pubs = append(pubs, pub)
 	}

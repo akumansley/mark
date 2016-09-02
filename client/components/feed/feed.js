@@ -18,7 +18,7 @@ var itemStyle = {
 }
 
 var titleStyle = {
-  lineHeight: "1.2",
+  lineHeight: "1.4",
   marginBottom: -2,
   display: "block",
   color: Colors.primaryText,
@@ -26,7 +26,9 @@ var titleStyle = {
 };
 
 var urlStyle = {
+  marginTop: 4,
   fontSize: "13px",
+  lineHeight: "1.4",
   color: Colors.secondaryText,
   fontWeight: "200",
   overflowWrap: 'break-word',
@@ -72,9 +74,9 @@ const RawItem = React.createClass({
       return (
         <div style={itemStyle} key={i.get('id')}>
           <div style={leftStyle}>
-            <a href={i.get('url')} style={titleStyle}>{i.get('title')}</a>
-            <span style={urlStyle}>
-            {i.get('profile').get('name')} - {i.get('short_url')} </span>
+            <a href={i.get('url')} target="_blank" style={titleStyle}>{i.get('title')}</a>
+            <div style={urlStyle}>
+            {i.get('profile').get('name')} - {i.get('short_url')} </div>
           </div>
           {delNode}
         </div>

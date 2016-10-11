@@ -4,7 +4,7 @@ import { routerReducer } from 'react-router-redux'
 
 
 const initBookmarks = Map({
-  items: Map({}),
+  itemsByFeed: Map({}),
   loading: false,
   error: null,
   hasMore: true
@@ -17,13 +17,14 @@ function bookmarks(state=initBookmarks, action) {
       return state.set('loading', true);
     case 'FETCH_STREAM_SUCCESS':
       const notLoading = state.set('loading', false);
-      const mergedItems = notLoading.update('items', items => (
-                    items.withMutations(m => {
-                      for (let i of action.payload.values()) {
-                        m.set(i.get('id'), i)
-                      }
-                    })
-                  ));
+      const mergedItems = notLoading.updateIn(['itemsByFeed', action.payload.get('feedId')], items => {
+          items = items || Map();
+          return items.withMutations(m => {
+            for (let i of action.payload.get('items').values()) {
+              m.set(i.get('id'), i)
+            }
+          });
+        });
       const hasMore = mergedItems.set('hasMore', action.payload.size? true: false);
       return hasMore;
     case 'FETCH_STREAM_FAILED':

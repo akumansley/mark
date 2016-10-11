@@ -5,6 +5,8 @@ import { fetchStream, removeMark } from '../../actions'
 import { connect } from 'react-redux'
 import { Add } from '../add/add'
 import { createSelector } from 'reselect'
+import { Link } from 'react-router'
+import { List, Map } from 'immutable';
 
 
 // var moreSrc = require('../../assets/more.png')
@@ -57,6 +59,11 @@ const linkButton = {
   cursor: "pointer",
 }
 
+const profileLink = {
+  color: Colors.secondaryText,
+  textDecoration: "none",
+}
+
 const RawItem = React.createClass({
     render: function() {
       const {removeMark, me, item: i} = this.props;
@@ -76,7 +83,8 @@ const RawItem = React.createClass({
           <div style={leftStyle}>
             <a href={i.get('url')} target="_blank" style={titleStyle}>{i.get('title')}</a>
             <div style={urlStyle}>
-            {i.get('profile').get('name')} - {i.get('short_url')} </div>
+              <Link style={profileLink} to={`/feed/${i.get('profile').get('feed_id')}`}>{i.get('profile').get('name')}</Link> - {i.get('short_url')}
+            </div>
           </div>
           {delNode}
         </div>
@@ -103,6 +111,7 @@ const TRIGGER_THRESHOLD = 100;
 const Component = React.createClass({
   componentWillMount: function () {
     window.addEventListener("scroll", this.handleScroll);
+    this.loadMore();
   },
 
   handleScroll: function (evt) {
@@ -130,7 +139,7 @@ const Component = React.createClass({
   },
 
   loadMore: function() {
-      this.props.fetchStream(PAGE_SIZE, this.props.items.size);
+      this.props.fetchStream(PAGE_SIZE, this.props.items.size, this.props.feedId);
   },
 
   render: function() {
@@ -146,7 +155,7 @@ const Component = React.createClass({
 
 const Styled = Radium(Component)
 
-const selectItems = state => state.bookmarks.get('items');
+const selectItems = (state, feedId) => state.bookmarks.getIn(['itemsByFeed', feedId]) || Map();
 const sortItems = createSelector([selectItems],
   items => items.valueSeq().sortBy(v => -1 * v.get('created_at')).toList());
 
@@ -163,16 +172,18 @@ const mixShortUrl = createSelector([sortItems], items => {
 });
 
 const Connected = connect(
-  function mapStateToProps(state) {
+  function mapStateToProps(state, ownProps) {
+    let feedId = ownProps.params.feedId || "me";
     return {
-      items: mixShortUrl(state),
+      feedId: feedId,
+      items: mixShortUrl(state, feedId),
       loading: state.bookmarks.get('loading'),
       hasMore: state.bookmarks.get('hasMore'),
     }
   },
   function mapDispatchToProps(dispatch) {
     return {
-      fetchStream: (count, offset) => dispatch(fetchStream(count, offset)),
+      fetchStream: (count, offset, feed_id) => dispatch(fetchStream(count, offset, feed_id)),
     }
 
   }

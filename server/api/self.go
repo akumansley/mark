@@ -8,6 +8,7 @@ import (
 
 	"github.com/awans/mark/app"
 	"github.com/awans/mark/feed"
+	"github.com/awans/mark/sandstorm"
 )
 
 // Self represents the current server
@@ -26,12 +27,16 @@ func (s *Self) GetSelf(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
+	resp := make(map[string]interface{})
 	if self == nil {
-		w.WriteHeader(404)
-		return
+		resp["url"] = nil
+	} else {
+		resp["url"] = self.URL
 	}
+	resp["sandstorm"] = sandstorm.IsSandstorm()
+
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	json.NewEncoder(w).Encode(self)
+	json.NewEncoder(w).Encode(resp)
 }
 
 // PutSelf lets a user update the self url

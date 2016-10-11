@@ -128,7 +128,7 @@ func serve(db *entities.DB, key *rsa.PrivateKey, port string) error {
 	// so it has to be called *before* the app.Sync starts..
 	// Note that initial sync will block on the first request to hit the server
 	s, sessionBus := server.New(appDB)
-	if os.Getenv("SANDSTORM") == "1" {
+	if sandstorm.IsSandstorm() {
 		g := sandstorm.NewGetter(sessionBus)
 		feed.Initialize(g)
 	} else {

@@ -1,10 +1,8 @@
 import Immutable from 'immutable';
 
-const origin = window.location.origin;
-
 function getMe() {
   return dispatch => {
-    fetch("/api/me", {
+    fetch("/api/profile", {
       credentials: 'same-origin'
     }).then(res => res.json())
     .then(json => dispatch({type:"FETCH_ME_SUCCESS", payload: Immutable.fromJS(json)}),
@@ -14,7 +12,7 @@ function getMe() {
 
 function updateMe(body) {
   return dispatch => {
-    fetch("/api/me", {
+    fetch("/api/profile", {
       credentials: 'same-origin',
       method: "PUT",
       body: JSON.stringify(body)

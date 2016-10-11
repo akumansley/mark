@@ -4,8 +4,6 @@ import { createAction } from 'redux-actions';
 import { isWebUri } from 'valid-url';
 import _ from 'lodash';
 
-const uid = () => Math.random().toString(34).slice(2);
-
 export const REQUEST_STREAM = 'REQUEST_STREAM';
 function requestStream() {
   return {
@@ -31,12 +29,20 @@ function fetchStreamFailed(error) {
 }
 
 // this is a thunk
-export function fetchStream(count, offset) {
+export function fetchStream(count, offset, feedId) {
   return function (dispatch) {
     // start the request
     dispatch(requestStream());
 
-    let qs = "?count=" + encodeURIComponent(count) + "&offset=" + encodeURIComponent(offset);
+    let qs = "?count=" + encodeURIComponent(count) +
+             "&offset=" + encodeURIComponent(offset);
+
+    if (feedId) {
+      qs = qs + "&feedId=" + encodeURIComponent(feedId);
+    } else {
+      feedId = "me";
+    }
+
     return fetch('/api/stream' + qs, {credentials: 'same-origin'})
             .then(res => {
               if (res.status >= 400) {
@@ -44,7 +50,12 @@ export function fetchStream(count, offset) {
               }
               return res.json();
             })
-            .then(json => dispatch(fetchStreamSuccess(Immutable.fromJS(json))))
+            .then(json => dispatch(fetchStreamSuccess(
+              Immutable.Map({
+                feedId: feedId,
+                items: Immutable.fromJS(json),
+              })
+            )))
             .catch(err => dispatch(fetchStreamFailed(err)));
   }
 }
@@ -67,7 +78,7 @@ export function addMark(url, title) {
     }
 
     return fetch('/api/bookmark', { method: "POST",
-      credentials: 'same-origin', 
+      credentials: 'same-origin',
       body: JSON.stringify({
         url: url,
         title: title

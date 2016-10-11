@@ -36,7 +36,14 @@ func (s *Stream) GetStream(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	bookmarks, err := s.db.GetStream(count, offset)
+	feedIDParam, ok := r.URL.Query()["feedId"]
+	var feedID string
+	if !ok {
+		feedID = ""
+	} else {
+		feedID = feedIDParam[0]
+	}
+	bookmarks, err := s.db.GetStream(count, offset, feedID)
 	if err != nil {
 		panic(err)
 	}
@@ -46,7 +53,7 @@ func (s *Stream) GetStream(w http.ResponseWriter, r *http.Request) {
 
 	sbs := make([]streamBookmark, 0)
 	for _, b := range bookmarks {
-		p, err := s.db.GetProfile(b.FeedID)
+		p, err := s.db.GetProfile(b.FeedID) // TODO do less work here..
 		if err != nil {
 			panic(err)
 		}

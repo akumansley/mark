@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"os"
 	"sync"
 
 	"golang.org/x/net/context"
@@ -135,4 +136,9 @@ func (s Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	sessionID := r.Header.Get("X-Sandstorm-Session-Id")
 	s.b.Pub(sessionID)
 	s.i.ServeHTTP(w, r)
+}
+
+// IsSandstorm returns whether this is inside of sandstorm
+func IsSandstorm() bool {
+	return os.Getenv("SANDSTORM") == "1"
 }

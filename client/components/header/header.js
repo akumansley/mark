@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, IndexLink } from 'react-router'
 import Colors from '../../colors';
 import Radium from 'radium';
+import { connect } from 'react-redux'
 
 const headerStyles = {
   marginTop: "0px",
@@ -26,11 +27,27 @@ function Component(props) {
           <IndexLink activeStyle={activeStyle} activeClassName="active" style={linkStyle} to="/">
             <span className="underline-if-active">All</span>
           </IndexLink>
-          <Link activeStyle={activeStyle} activeClassName="active" style={linkStyle} to="/me">
-            <span className="underline-if-active">Profile</span>
+          <Link activeStyle={activeStyle} activeClassName="active" style={linkStyle} to={"/feed/" + props.feedId}>
+            <span className="underline-if-active">Me</span>
+          </Link>
+          <Link activeStyle={activeStyle} activeClassName="active" style={linkStyle} to="/settings">
+            <span className="underline-if-active">Settings</span>
           </Link>
         </div>
     )
 }
 
-export const Header = Radium(Component);
+const Styled = Radium(Component);
+
+const Connected = connect(
+  function mapStateToProps(state) {
+    let feedId = "";
+    if (state.me) {
+      feedId = state.me.get('feed_id');
+    }
+    return {
+      feedId: feedId,
+    }
+  }, null, null, {pure:false})(Styled);
+
+export const Header = Connected;

@@ -48,10 +48,14 @@ function firstRun() {
     ).then(
       res => res.json()
     ).then(
-      data => dispatch({type: "GET_SELF_SUCCESS", payload: data}),
+      data => {
+        dispatch({type: "GET_SELF_SUCCESS", payload: data})
+        if (!data.url) {
+          dispatch(push("/first-run"));
+        }
+      },
       err => {
         dispatch({type: "GET_SELF_FAILED", payload: err});
-        dispatch(push('/first-run'));
       }
     )
   }
@@ -83,7 +87,8 @@ render(
       <Router history={history}>
         <Route path="/" component={App}>
           <IndexRoute component={Feed} onEnter={() => store.dispatch(fetchStream(30, 0))}/>
-          <Route path="me" component={Me} onEnter={() => store.dispatch(meActions.getMe())}/>
+          <Route path="settings" component={Me} onEnter={() => store.dispatch(meActions.getMe())}/>
+          <Route path="/feed/:feedId" component={Feed} />
         </Route>
         <Route path="first-run" component={FirstRun} />
       </Router>
